@@ -390,3 +390,6 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 
 /* Contenedor blanco para formularios y secciones del panel */
 .tarjeta { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); padding: clamp(1.1rem, 2.5vw, 1.75rem); height: 100%; }
+
+/* Punto de color del disco de cada plan en tablas */
+.punto { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; background: var(--color); margin-right: .45rem; vertical-align: baseline; }

@@ -29,3 +29,29 @@ async function peticion(url, opciones = {}) {
     }
     return datos;
 }
+
+/**
+ * Confirmación antes de enviar formularios peligrosos (eliminar, dar de baja).
+ * Uso: <form method="post" data-confirmar="¿Eliminar el plan Básico?" data-boton="Eliminar">
+ */
+document.addEventListener('submit', (evento) => {
+    const form = evento.target;
+    if (!form.matches('form[data-confirmar]') || form.dataset.confirmado === '1') {
+        return;
+    }
+    const modalEl = document.getElementById('modal-confirmar');
+    if (!modalEl || !window.bootstrap) {
+        return; // sin modal disponible, el formulario se envía normal
+    }
+    evento.preventDefault();
+    document.getElementById('modal-confirmar-texto').textContent = form.dataset.confirmar;
+    const boton = document.getElementById('modal-confirmar-si');
+    boton.textContent = form.dataset.boton || 'Sí, continuar';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    boton.onclick = () => {
+        form.dataset.confirmado = '1';
+        modal.hide();
+        form.requestSubmit ? form.requestSubmit() : form.submit();
+    };
+    modal.show();
+});
