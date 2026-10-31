@@ -387,3 +387,6 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Contenedor blanco para formularios y secciones del panel */
+.tarjeta { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); padding: clamp(1.1rem, 2.5vw, 1.75rem); height: 100%; }
