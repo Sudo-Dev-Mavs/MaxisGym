@@ -393,3 +393,12 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 
 /* Punto de color del disco de cada plan en tablas */
 .punto { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; background: var(--color); margin-right: .45rem; vertical-align: baseline; }
+
+/* Paginación con los colores de la marca */
+.pagination {
+    --bs-pagination-color: var(--tinta);
+    --bs-pagination-hover-color: var(--tinta);
+    --bs-pagination-focus-color: var(--tinta);
+    --bs-pagination-active-bg: var(--hule);
+    --bs-pagination-active-border-color: var(--hule);
+}

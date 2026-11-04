@@ -6,6 +6,7 @@
  * (así nadie puede registrarse como administrador).
  */
 require __DIR__ . '/app/bootstrap.php';
+require ROOT_PATH . '/app/validacion.php';
 
 if ($yo = usuario_actual()) {
     redirigir(panel_de($yo));
@@ -16,38 +17,13 @@ $errores = [];
 if (es_post()) {
     csrf_verificar();
 
-    $datos = [
-        'nombre'           => entrada('nombre'),
-        'apellido'         => entrada('apellido'),
-        'email'            => mb_strtolower(entrada('email')),
-        'telefono'         => entrada('telefono'),
-        'fecha_nacimiento' => entrada('fecha_nacimiento'),
-    ];
+    $datos = datos_persona_post();
     $password = $_POST['password'] ?? '';
     $confirmacion = $_POST['password_confirmacion'] ?? '';
 
-    if ($datos['nombre'] === '' || mb_strlen($datos['nombre']) > 60) {
-        $errores['nombre'] = 'Escribe tu nombre (máximo 60 caracteres).';
-    }
-    if ($datos['apellido'] === '' || mb_strlen($datos['apellido']) > 60) {
-        $errores['apellido'] = 'Escribe tu apellido (máximo 60 caracteres).';
-    }
-    if (!correo_valido($datos['email']) || mb_strlen($datos['email']) > 120) {
-        $errores['email'] = 'Escribe un correo válido, por ejemplo nombre@correo.com.';
-    } elseif (valor('SELECT COUNT(*) FROM usuarios WHERE email = ?', [$datos['email']]) > 0) {
-        $errores['email'] = 'Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.';
-    }
-    if (!preg_match('/^[0-9 +()\-]{7,20}$/', $datos['telefono'])) {
-        $errores['telefono'] = 'Escribe un teléfono de 7 a 20 dígitos.';
-    }
-    $nacimiento = DateTime::createFromFormat('!Y-m-d', $datos['fecha_nacimiento']);
-    if (!$nacimiento || $nacimiento->format('Y-m-d') !== $datos['fecha_nacimiento']) {
-        $errores['fecha_nacimiento'] = 'Escribe tu fecha de nacimiento.';
-    } elseif ($nacimiento > new DateTime('-12 years')) {
-        $errores['fecha_nacimiento'] = 'Debes tener al menos 12 años para registrarte.';
-    } elseif ($nacimiento < new DateTime('-110 years')) {
-        $errores['fecha_nacimiento'] = 'Revisa el año de tu fecha de nacimiento.';
-    }
+    // Nombre, apellido, correo (no repetido), teléfono y fecha: obligatorios en el registro
+    $errores = validar_persona($datos, 0, true, true);
+
     if (!is_string($password) || !is_string($confirmacion)
         || ($msg = error_password($password, $confirmacion)) !== null) {
         $errores['password'] = $msg ?? 'Escribe una contraseña.';

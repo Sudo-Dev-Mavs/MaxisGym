@@ -6,6 +6,7 @@
  * - Cambiar contraseña: pide la actual y la nueva dos veces.
  */
 require __DIR__ . '/../app/bootstrap.php';
+require ROOT_PATH . '/app/validacion.php';
 
 $yo = requiere_permiso('perfil.editar');
 $errores = [];
@@ -17,37 +18,14 @@ if (es_post()) {
     $hashActual = valor('SELECT password FROM usuarios WHERE id = ?', [$yo['id']]);
 
     if ($accion === 'datos') {
-        $datos = [
-            'nombre'           => entrada('nombre'),
-            'apellido'         => entrada('apellido'),
-            'email'            => mb_strtolower(entrada('email')),
-            'telefono'         => entrada('telefono'),
-            'fecha_nacimiento' => entrada('fecha_nacimiento'),
-        ];
+        $datos = datos_persona_post();
+        $errores = validar_persona($datos, (int) $yo['id']);
 
-        if ($datos['nombre'] === '' || mb_strlen($datos['nombre']) > 60) {
-            $errores['nombre'] = 'Escribe tu nombre (máximo 60 caracteres).';
-        }
-        if ($datos['apellido'] === '' || mb_strlen($datos['apellido']) > 60) {
-            $errores['apellido'] = 'Escribe tu apellido (máximo 60 caracteres).';
-        }
-        if (!correo_valido($datos['email']) || mb_strlen($datos['email']) > 120) {
-            $errores['email'] = 'Escribe un correo válido.';
-        } elseif ($datos['email'] !== $yo['email']) {
-            if (valor('SELECT COUNT(*) FROM usuarios WHERE email = ? AND id <> ?', [$datos['email'], $yo['id']]) > 0) {
-                $errores['email'] = 'Ese correo ya lo usa otra cuenta.';
-            } elseif (!is_string($_POST['password_actual_correo'] ?? null)
-                || !password_verify($_POST['password_actual_correo'], $hashActual)) {
+        // Para cambiar el correo se pide la contraseña actual
+        if (!isset($errores['email']) && $datos['email'] !== $yo['email']) {
+            $pc = $_POST['password_actual_correo'] ?? null;
+            if (!is_string($pc) || !password_verify($pc, $hashActual)) {
                 $errores['password_actual_correo'] = 'Para cambiar tu correo escribe tu contraseña actual.';
-            }
-        }
-        if ($datos['telefono'] !== '' && !preg_match('/^[0-9 +()\-]{7,20}$/', $datos['telefono'])) {
-            $errores['telefono'] = 'Escribe un teléfono de 7 a 20 dígitos.';
-        }
-        if ($datos['fecha_nacimiento'] !== '') {
-            $f = DateTime::createFromFormat('!Y-m-d', $datos['fecha_nacimiento']);
-            if (!$f || $f->format('Y-m-d') !== $datos['fecha_nacimiento'] || $f > new DateTime('-12 years')) {
-                $errores['fecha_nacimiento'] = 'Revisa tu fecha de nacimiento.';
             }
         }
 

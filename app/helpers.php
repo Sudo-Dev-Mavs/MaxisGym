@@ -159,3 +159,31 @@ function correo_valido(string $correo): bool
 {
     return filter_var($correo, FILTER_VALIDATE_EMAIL) !== false;
 }
+
+/**
+ * Paginación de Bootstrap.
+ * $params: parámetros de la URL que se conservan al cambiar de página (búsqueda, filtros).
+ */
+function paginacion(int $total, int $porPagina, int $pagina, string $ruta, array $params = []): string
+{
+    $paginas = (int) ceil($total / max(1, $porPagina));
+    if ($paginas <= 1) {
+        return '';
+    }
+    $enlace = fn(int $p) => url($ruta) . '?' . http_build_query($params + ['pagina' => $p]);
+    $html = '<nav aria-label="Paginación"><ul class="pagination justify-content-end mb-0">';
+    $html .= '<li class="page-item' . ($pagina <= 1 ? ' disabled' : '') . '"><a class="page-link" href="' . e($enlace(max(1, $pagina - 1))) . '" aria-label="Anterior">&laquo;</a></li>';
+    for ($p = 1; $p <= $paginas; $p++) {
+        $activa = $p === $pagina;
+        $html .= '<li class="page-item' . ($activa ? ' active' : '') . '"><a class="page-link" href="' . e($enlace($p)) . '"'
+            . ($activa ? ' aria-current="page"' : '') . '>' . $p . '</a></li>';
+    }
+    $html .= '<li class="page-item' . ($pagina >= $paginas ? ' disabled' : '') . '"><a class="page-link" href="' . e($enlace(min($paginas, $pagina + 1))) . '" aria-label="Siguiente">&raquo;</a></li>';
+    return $html . '</ul></nav>';
+}
+
+/** Número de página pedido en la URL (mínimo 1). */
+function pagina_actual_num(): int
+{
+    return max(1, (int) parametro('pagina', '1'));
+}
