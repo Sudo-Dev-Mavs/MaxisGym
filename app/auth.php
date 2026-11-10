@@ -118,8 +118,13 @@ function requiere_permiso(string ...$claves): array
         if (es_ajax()) {
             responder_json(['ok' => false, 'mensaje' => 'No tienes permiso para esta acción.'], 403);
         }
+        $destino = panel_de($u);
+        // Evita un ciclo de redirecciones si su propio panel tampoco le corresponde
+        if (str_ends_with(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '', '/' . $destino)) {
+            redirigir('sin_acceso.php');
+        }
         flash('warning', 'No tienes permiso para entrar a esa sección.');
-        redirigir(panel_de($u));
+        redirigir($destino);
     }
     return $u;
 }
@@ -138,7 +143,14 @@ function panel_de(array $u): string
     if (array_intersect(['pagos.registrar', 'socios.alta', 'socios.consultar', 'anuncios.publicar'], $p)) {
         return 'empleado/index.php';
     }
-    return 'socio/index.php';
+    if (in_array('membresia.ver', $p, true)) {
+        return 'socio/index.php';
+    }
+    if (in_array('perfil.editar', $p, true)) {
+        return 'cuenta/perfil.php';
+    }
+    // Un rol sin permisos de ningún panel (por ejemplo, recién creado y sin configurar)
+    return 'sin_acceso.php';
 }
 
 /** Inicia la sesión de un usuario ya verificado. */
