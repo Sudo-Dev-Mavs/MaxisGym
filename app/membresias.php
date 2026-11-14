@@ -77,6 +77,10 @@ function membresias_por_vencer(int $dias = 7): array
            JOIN planes p ON p.id = m.plan_id
           WHERE ' . SQL_VIGENTE . ' AND u.activo = 1
             AND m.fecha_fin <= CURDATE() + INTERVAL ? DAY
+            -- si ya pagó el siguiente periodo, no está "por vencer"
+            AND NOT EXISTS (SELECT 1 FROM membresias sig
+                             WHERE sig.usuario_id = m.usuario_id AND sig.estado <> \'cancelada\'
+                               AND sig.fecha_inicio > m.fecha_fin)
           ORDER BY m.fecha_fin ASC, u.nombre',
         [$dias]
     );
@@ -92,4 +96,15 @@ function texto_dias(int $dias): string
         return 'vence mañana';
     }
     return "vence en $dias días";
+}
+
+/** Siguiente periodo ya pagado (renovación por adelantado) que todavía no inicia, o null. */
+function renovacion_pendiente(int $usuarioId): ?array
+{
+    return fila(
+        "SELECT m.*, p.nombre_plan FROM membresias m JOIN planes p ON p.id = m.plan_id
+          WHERE m.usuario_id = ? AND m.estado <> 'cancelada' AND m.fecha_inicio > CURDATE()
+          ORDER BY m.fecha_inicio ASC LIMIT 1",
+        [$usuarioId]
+    );
 }

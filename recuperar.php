@@ -38,15 +38,7 @@ if (es_post()) {
         );
 
         if (!$reciente) {
-            $token = bin2hex(random_bytes(32));
-            consulta(
-                'INSERT INTO password_reset_tokens (email, token, created_at)
-                 VALUES (?, ?, NOW())
-                 ON DUPLICATE KEY UPDATE token = VALUES(token), created_at = NOW()',
-                [$usuario['email'], hash('sha256', $token)]
-            );
-
-            $enlace = url_absoluta('restablecer.php?' . http_build_query(['email' => $usuario['email'], 'token' => $token]));
+            $enlace = generar_enlace_contrasena($usuario['email']);
             $minutos = (int) config('recuperacion_minutos', 30);
 
             enviar_correo(
