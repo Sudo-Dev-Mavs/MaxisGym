@@ -402,3 +402,9 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
     --bs-pagination-active-bg: var(--hule);
     --bs-pagination-active-border-color: var(--hule);
 }
+
+/* Matriz de roles y permisos */
+.matriz-permisos code { color: var(--acero); font-size: .78rem; }
+.matriz-permisos td { width: 9rem; }
+.matriz-permisos .form-check-input { width: 1.25rem; height: 1.25rem; }
+.matriz-permisos .form-check-input:checked { background-color: var(--hule); border-color: var(--hule); }
