@@ -13,6 +13,7 @@ $yo = requiere_permiso('membresia.ver');
 $membresia = membresia_vigente((int) $yo['id']);
 $ultima = $membresia ?? ultima_membresia((int) $yo['id']);
 $nuevosAvisos = avisos_sin_leer($yo);
+$renovacion = renovacion_pendiente((int) $yo['id']);
 
 $progreso = 0;
 if ($membresia) {
@@ -25,7 +26,13 @@ $titulo = 'Bienvenido, ' . $yo['nombre'];
 require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
-<?php if ($membresia && $membresia['dias_restantes'] <= 7): ?>
+<?php if ($renovacion): ?>
+    <div class="alert alert-success d-flex gap-2 align-items-start" role="status">
+        <i class="bi bi-check-circle-fill mt-1" aria-hidden="true"></i>
+        <div>Ya renovaste: tu <?= e($renovacion['nombre_plan']) ?> continúa del <?= e(fecha($renovacion['fecha_inicio'])) ?>
+            al <?= e(fecha($renovacion['fecha_fin'])) ?>.</div>
+    </div>
+<?php elseif ($membresia && $membresia['dias_restantes'] <= 7): ?>
     <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert">
         <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
         <div>Tu membresía <?= e(texto_dias((int) $membresia['dias_restantes'])) ?> (<?= e(fecha($membresia['fecha_fin'])) ?>).

@@ -242,3 +242,21 @@ function error_password(string $password, string $confirmacion): ?string
     }
     return null;
 }
+
+/**
+ * Crea (o reemplaza) el token para definir contraseña de un correo y
+ * devuelve el enlace completo. En la base sólo se guarda el hash del token.
+ * Lo usan "¿Olvidaste tu contraseña?" y el correo de bienvenida del Alta de socios.
+ * (Requiere app/correo.php para url_absoluta()).
+ */
+function generar_enlace_contrasena(string $email): string
+{
+    $token = bin2hex(random_bytes(32));
+    consulta(
+        'INSERT INTO password_reset_tokens (email, token, created_at)
+         VALUES (?, ?, NOW())
+         ON DUPLICATE KEY UPDATE token = VALUES(token), created_at = NOW()',
+        [$email, hash('sha256', $token)]
+    );
+    return url_absoluta('restablecer.php?' . http_build_query(['email' => $email, 'token' => $token]));
+}
