@@ -19,6 +19,7 @@ function menu_panel(): array
             ['admin/empleados.php', 'Empleados',        'bi-person-badge',      ['empleados.gestionar']],
             ['admin/planes.php',    'Planes',           'bi-tags',              ['planes.gestionar']],
             ['admin/reportes.php',  'Reportes',         'bi-graph-up',          ['reportes.ver']],
+            ['admin/roles.php',     'Roles y permisos', 'bi-shield-lock',       ['empleados.gestionar']],
         ],
         'Recepción' => [
             ['empleado/index.php',      'Panel de recepción', 'bi-grid',         PERMISOS_RECEPCION],
