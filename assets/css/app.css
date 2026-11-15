@@ -408,8 +408,6 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 .matriz-permisos td { width: 9rem; }
 .matriz-permisos .form-check-input { width: 1.25rem; height: 1.25rem; }
 .matriz-permisos .form-check-input:checked { background-color: var(--hule); border-color: var(--hule); }
-<<<<<<< HEAD
-=======
 
 /* Buscador de socios con resultados desplegables */
 .buscador { position: relative; }
@@ -423,4 +421,17 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 }
 .fila-nueva { animation: resaltar 2.5s ease; }
 @keyframes resaltar { from { background: #fff4c7; } to { background: transparent; } }
->>>>>>> 14f5b52 (Recepción: alta de socios con plan y pago, registro de pagos con búsqueda AJAX y renovaciones)
+
+/* Avisos del sistema */
+.lista-avisos { display: grid; gap: .85rem; }
+.aviso { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); padding: 1rem 1.25rem; }
+.aviso-importante { border-left: 5px solid var(--disco-rojo); }
+.aviso-importante .aviso-titulo i { color: var(--disco-rojo); }
+.aviso-titulo { font-family: var(--fuente-titulos); font-size: 1.45rem; font-weight: 700; margin: 0 0 .35rem; }
+.aviso-texto { margin-bottom: .5rem; }
+.aviso-meta { color: var(--acero); font-size: .85rem; margin: 0; }
+
+/* Datos de la membresía (inicio, vencimiento, estado) */
+.datos-membresia { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; }
+.datos-membresia dt { color: var(--acero-claro); font-weight: 500; font-size: .85rem; }
+.datos-membresia dd { margin: 0; font-weight: 600; font-size: 1.05rem; }
