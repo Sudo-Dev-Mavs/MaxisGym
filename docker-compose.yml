@@ -1,0 +1,19 @@
+# Levanta la página en http://localhost:8080
+#   docker compose up -d      (encender)
+#   docker compose down       (apagar)
+# Usa el contenedor de MySQL que ya existe ("mysql") a través de la red maxisgym-net.
+services:
+  web:
+    build: .
+    container_name: maxisgym-web
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - maxisgym-net
+    restart: unless-stopped
+
+networks:
+  maxisgym-net:
+    external: true

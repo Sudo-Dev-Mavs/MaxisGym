@@ -1,0 +1,8 @@
+# Configuración con contraseñas de cada equipo
+config/config.local.php
+
+# Correos de prueba y bitácoras generadas
+storage/correos/*
+!storage/correos/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep

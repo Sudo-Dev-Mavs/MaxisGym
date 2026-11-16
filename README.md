@@ -38,6 +38,27 @@ así que el sistema funciona sin conexión a internet.
 Si tu MySQL tiene contraseña u otro usuario, copia `config/config.local.example.php`
 como `config/config.local.php` y escribe ahí tus datos.
 
+## Instalación en Linux (MySQL en Docker)
+
+Requiere un contenedor de MySQL llamado `mysql` con la base `maxisgym` cargada
+y un `config/config.local.php` con tu usuario y contraseña de MySQL.
+
+**Opción A: PHP instalado en tu equipo**
+```
+cd MaxisGym
+php -S localhost:8000
+```
+Abre `http://localhost:8000/`. (Este servidor no lee los `.htaccess`, sirve solo para desarrollo).
+
+**Opción B: PHP + Apache en Docker** (igual que Laragon)
+```
+docker network create maxisgym-net          # una sola vez
+docker network connect maxisgym-net mysql   # una sola vez
+docker compose up -d                         # encender  → http://localhost:8080/
+docker compose down                          # apagar
+```
+Tarea de vencimientos a mano: `docker compose exec -u www-data web php tareas/notificar_vencimientos.php`
+
 ### Si ya tenías la base de datos cargada
 
 Cuando una versión nueva agrega algo al catálogo, viene un script en
