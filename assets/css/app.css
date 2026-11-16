@@ -369,7 +369,9 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 .atajo strong { display: block; font-family: var(--fuente-titulos); font-size: 1.35rem; font-weight: 700; line-height: 1.2; margin-bottom: .2rem; }
 .atajo span { color: #4a535c; font-size: .93rem; }
 
-.tarjeta-tabla { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); overflow: hidden; }
+.tarjeta-tabla { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); overflow: hidden; position: relative; }
+/* position: relative: el texto "visually-hidden" (posición absoluta) de un encabezado
+   no debe escaparse del recorte de .table-responsive y ensanchar la página en celular */
 .tarjeta-tabla .table { --bs-table-bg: transparent; }
 .tarjeta-tabla thead th { font-size: .85rem; color: #4a535c; font-weight: 600; background: #fafbfa; }
 .tarjeta-tabla td, .tarjeta-tabla th { padding: .7rem 1rem; }
