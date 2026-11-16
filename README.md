@@ -9,6 +9,7 @@ Proyecto final de Programación Web (Laboratorio, grupo 238, FIME – UANL).
 |---|---|
 | Front-end | HTML5, CSS3, JavaScript (fetch/AJAX), Bootstrap 5.3, Bootstrap Icons |
 | Back-end | PHP 8 (sin framework) con PDO |
+| Reportes PDF | FPDF 1.9 (`app/lib/fpdf`, un solo archivo PHP, sin Composer) |
 | Base de datos | MySQL 8 |
 | Servidor local | Laragon (Apache + MySQL + PHP) |
 | Control de versiones | Git + GitHub |
@@ -75,6 +76,7 @@ maxisgym/
 ├── socio/          Panel del socio (membresía, historial de pagos)
 ├── cuenta/         Páginas de cualquier usuario con sesión (perfil, avisos)
 ├── app/            Código compartido (conexión, seguridad, permisos, vistas)
+│   └── lib/fpdf/   Librería para generar el reporte en PDF
 ├── assets/         CSS, JavaScript, imágenes y librerías locales
 ├── config/         Configuración (base de datos, zona horaria, correo)
 ├── database/       Scripts SQL (estructura y datos de demostración)

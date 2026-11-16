@@ -435,3 +435,27 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 .datos-membresia { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; }
 .datos-membresia dt { color: var(--acero-claro); font-weight: 500; font-size: .85rem; }
 .datos-membresia dd { margin: 0; font-weight: 600; font-size: 1.05rem; }
+
+/* Reportes: filtros y gráfica de columnas (barras de 24px, punta redondeada, base recta) */
+.filtros-reporte { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; }
+.grafica { --alto: 220px; display: grid; grid-template-columns: 2.6rem 1fr; gap: .5rem; padding-bottom: 1.6rem; }
+.grafica-eje { position: relative; height: var(--alto); }
+.grafica-eje span { position: absolute; right: 0; transform: translateY(50%); font-size: .75rem; color: var(--acero); }
+.grafica-columnas {
+    position: relative; height: var(--alto); list-style: none; margin: 0; padding: 0;
+    display: flex; align-items: flex-end; justify-content: space-around;
+    border-bottom: 1px solid #c9cfd5;
+    background: repeating-linear-gradient(to top, #eceef0 0 1px, transparent 1px 25%);
+}
+.columna { position: relative; height: 100%; flex: 1; display: flex; justify-content: center; align-items: flex-end; outline: none; }
+.columna-barra { position: relative; width: 24px; background: var(--disco-azul); border-radius: 4px 4px 0 0; min-height: 0; }
+.columna-valor { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 2px; font-size: .78rem; font-weight: 600; color: var(--tinta); white-space: nowrap; }
+.columna-mes { position: absolute; top: calc(100% + .35rem); font-size: .78rem; color: #4a535c; white-space: nowrap; }
+.columna-tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--hule); color: #fff; font-size: .8rem; padding: .35rem .6rem; border-radius: .35rem;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s ease; z-index: 2; text-align: center;
+}
+.columna:hover .columna-tooltip, .columna:focus-visible .columna-tooltip { opacity: 1; }
+.columna:hover .columna-barra, .columna:focus-visible .columna-barra { filter: brightness(1.15); }
+.columna:focus-visible { box-shadow: inset 0 0 0 2px var(--seguridad); border-radius: .3rem; }
