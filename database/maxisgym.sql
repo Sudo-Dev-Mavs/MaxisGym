@@ -236,11 +236,12 @@ INSERT INTO permisos (clave, descripcion, created_at, updated_at) VALUES
  ('perfil.editar',       'Consultar y editar el perfil propio',  NOW(), NOW()),
  ('membresia.ver',       'Consultar la membresía propia',        NOW(), NOW()),
  ('pagos.ver_propios',   'Consultar el historial de pagos propio', NOW(), NOW()),
- ('anuncios.ver',        'Leer avisos del sistema',              NOW(), NOW());
+ ('anuncios.ver',        'Leer avisos del sistema',              NOW(), NOW()),
+ ('mensajes.atender',    'Atender mensajes de contacto',         NOW(), NOW());
 
 INSERT INTO rol_permiso (rol_id, permiso_id) VALUES
- (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,12),   -- admin
- (2,5),(2,6),(2,7),(2,8),(2,9),(2,12),                           -- empleado
+ (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,12),(1,13),   -- admin
+ (2,5),(2,6),(2,7),(2,8),(2,9),(2,12),(2,13),                           -- empleado
  (3,9),(3,10),(3,11),(3,12);                                     -- socio
 
 INSERT INTO metodos_pago (nombre, created_at, updated_at) VALUES

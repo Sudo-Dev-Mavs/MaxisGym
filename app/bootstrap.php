@@ -22,8 +22,9 @@ if (config('debug')) {
     ini_set('display_errors', '0');
 }
 
-// Sesión con cookies seguras: no accesibles desde JavaScript y sólo para este sitio
-if (session_status() === PHP_SESSION_NONE) {
+// Sesión con cookies seguras: no accesibles desde JavaScript y sólo para este sitio.
+// Las tareas programadas (terminal) no usan sesión.
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     session_name('maxisgym_sesion');
     session_set_cookie_params([
         'lifetime' => 0,

@@ -8,7 +8,7 @@
  */
 
 const PERMISOS_ADMIN = ['empleados.gestionar', 'reportes.ver', 'planes.gestionar'];
-const PERMISOS_RECEPCION = ['pagos.registrar', 'socios.alta', 'socios.consultar', 'anuncios.publicar'];
+const PERMISOS_RECEPCION = ['pagos.registrar', 'socios.alta', 'socios.consultar', 'anuncios.publicar', 'mensajes.atender'];
 
 function menu_panel(): array
 {
@@ -27,6 +27,7 @@ function menu_panel(): array
             ['empleado/alta_socio.php', 'Alta de socios',     'bi-person-plus',  ['socios.alta']],
             ['empleado/consultar.php',  'Consultar socios',   'bi-search',       ['socios.consultar']],
             ['empleado/anuncios.php',   'Publicar avisos',    'bi-megaphone',    ['anuncios.publicar']],
+            ['empleado/mensajes.php',   'Mensajes',           'bi-envelope',     ['mensajes.atender']],
         ],
         'Mi cuenta' => [
             ['socio/index.php',     'Inicio',              'bi-house',              ['membresia.ver']],

@@ -369,7 +369,9 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 .atajo strong { display: block; font-family: var(--fuente-titulos); font-size: 1.35rem; font-weight: 700; line-height: 1.2; margin-bottom: .2rem; }
 .atajo span { color: #4a535c; font-size: .93rem; }
 
-.tarjeta-tabla { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); overflow: hidden; }
+.tarjeta-tabla { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); overflow: hidden; position: relative; }
+/* position: relative: el texto "visually-hidden" (posición absoluta) de un encabezado
+   no debe escaparse del recorte de .table-responsive y ensanchar la página en celular */
 .tarjeta-tabla .table { --bs-table-bg: transparent; }
 .tarjeta-tabla thead th { font-size: .85rem; color: #4a535c; font-weight: 600; background: #fafbfa; }
 .tarjeta-tabla td, .tarjeta-tabla th { padding: .7rem 1rem; }
@@ -408,8 +410,6 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 .matriz-permisos td { width: 9rem; }
 .matriz-permisos .form-check-input { width: 1.25rem; height: 1.25rem; }
 .matriz-permisos .form-check-input:checked { background-color: var(--hule); border-color: var(--hule); }
-<<<<<<< HEAD
-=======
 
 /* Buscador de socios con resultados desplegables */
 .buscador { position: relative; }
@@ -423,4 +423,67 @@ a.disco:hover { color: var(--texto); transform: translateY(-8px) rotate(-6deg); 
 }
 .fila-nueva { animation: resaltar 2.5s ease; }
 @keyframes resaltar { from { background: #fff4c7; } to { background: transparent; } }
->>>>>>> 14f5b52 (Recepción: alta de socios con plan y pago, registro de pagos con búsqueda AJAX y renovaciones)
+
+/* Avisos del sistema */
+.lista-avisos { display: grid; gap: .85rem; }
+.aviso { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); padding: 1rem 1.25rem; }
+.aviso-importante { border-left: 5px solid var(--disco-rojo); }
+.aviso-importante .aviso-titulo i { color: var(--disco-rojo); }
+.aviso-titulo { font-family: var(--fuente-titulos); font-size: 1.45rem; font-weight: 700; margin: 0 0 .35rem; }
+.aviso-texto { margin-bottom: .5rem; }
+.aviso-meta { color: var(--acero); font-size: .85rem; margin: 0; }
+
+/* Datos de la membresía (inicio, vencimiento, estado) */
+.datos-membresia { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; }
+.datos-membresia dt { color: var(--acero-claro); font-weight: 500; font-size: .85rem; }
+.datos-membresia dd { margin: 0; font-weight: 600; font-size: 1.05rem; }
+
+/* Reportes: filtros y gráfica de columnas (barras de 24px, punta redondeada, base recta) */
+.filtros-reporte { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; }
+.grafica { --alto: 220px; display: grid; grid-template-columns: 2.6rem 1fr; gap: .5rem; padding-bottom: 1.6rem; }
+.grafica-eje { position: relative; height: var(--alto); }
+.grafica-eje span { position: absolute; right: 0; transform: translateY(50%); font-size: .75rem; color: var(--acero); }
+.grafica-columnas {
+    position: relative; height: var(--alto); list-style: none; margin: 0; padding: 0;
+    display: flex; align-items: flex-end; justify-content: space-around;
+    border-bottom: 1px solid #c9cfd5;
+    background: repeating-linear-gradient(to top, #eceef0 0 1px, transparent 1px 25%);
+}
+.columna { position: relative; height: 100%; flex: 1; display: flex; justify-content: center; align-items: flex-end; outline: none; }
+.columna-barra { position: relative; width: 24px; background: var(--disco-azul); border-radius: 4px 4px 0 0; min-height: 0; }
+.columna-valor { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 2px; font-size: .78rem; font-weight: 600; color: var(--tinta); white-space: nowrap; }
+.columna-mes { position: absolute; top: calc(100% + .35rem); font-size: .78rem; color: #4a535c; white-space: nowrap; }
+.columna-tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--hule); color: #fff; font-size: .8rem; padding: .35rem .6rem; border-radius: .35rem;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s ease; z-index: 2; text-align: center;
+}
+.columna:hover .columna-tooltip, .columna:focus-visible .columna-tooltip { opacity: 1; }
+.columna:hover .columna-barra, .columna:focus-visible .columna-barra { filter: brightness(1.15); }
+.columna:focus-visible { box-shadow: inset 0 0 0 2px var(--seguridad); border-radius: .3rem; }
+
+/* ---------- Mensajes de contacto ---------- */
+.filtros-mensajes { gap: .25rem; }
+.filtros-mensajes .nav-link { color: var(--tinta); font-weight: 500; }
+.filtros-mensajes .nav-link:hover { background: #e9ebe8; }
+.filtros-mensajes .nav-link.active { background: var(--hule); color: #fff; }
+.mensaje { background: #fff; border: 1px solid #e3e6e9; border-radius: var(--bs-border-radius); padding: 1rem 1.25rem; }
+.mensaje-pendiente { border-left: 4px solid var(--seguridad); }
+.mensaje-asunto { font-family: var(--fuente-titulos); font-size: 1.35rem; font-weight: 700; margin: 0; }
+.mensaje-asunto i { color: var(--disco-amarillo); }
+.mensaje-fecha { color: var(--acero); font-size: .85rem; margin: 0; white-space: nowrap; }
+.mensaje-de { font-size: .92rem; margin: .2rem 0 .65rem; }
+.mensaje-de .badge { font-weight: 600; vertical-align: .1em; }
+.mensaje-texto { white-space: pre-line; margin-bottom: .75rem; max-width: 75ch; }
+.mensaje-membresia { display: inline-block; font-size: .88rem; color: #4a535c; background: var(--gis); border-radius: 6px; padding: .35rem .65rem; margin-bottom: .75rem; }
+.mensaje-acciones { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.mensaje-atendido { color: var(--disco-verde); font-size: .88rem; margin-right: .5rem; }
+a.dato-enlace { display: block; color: inherit; text-decoration: none; }
+a.dato-enlace:hover, a.dato-enlace:focus-visible { border-color: var(--acero); }
+.aviso-mensajes {
+    display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center;
+    background: #fff8d6; border: 1px solid #f0dc8a; border-radius: var(--bs-border-radius);
+    padding: .75rem 1.1rem; color: var(--tinta); text-decoration: none;
+}
+.aviso-mensajes > .bi { font-size: 1.3rem; color: #9a7400; }
+.aviso-mensajes:hover, .aviso-mensajes:focus-visible { border-color: var(--disco-amarillo); color: var(--tinta); }
