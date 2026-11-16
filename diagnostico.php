@@ -32,6 +32,13 @@ $esperadas = ['roles', 'permisos', 'rol_permiso', 'metodos_pago', 'usuarios', 'p
 $faltan = array_diff($esperadas, $tablas);
 $revisiones[] = ['Las 14 tablas existen', !$faltan, $faltan ? 'Faltan: ' . implode(', ', $faltan) . '. Ejecuta database/maxisgym.sql' : count($tablas) . ' tablas'];
 
+// Permisos agregados después de la Fase 2 (para bases cargadas antes)
+if (!$faltan) {
+    $faltaPermiso = !valor("SELECT COUNT(*) FROM permisos WHERE clave = 'mensajes.atender'");
+    $revisiones[] = ['Permiso mensajes.atender', !$faltaPermiso,
+        $faltaPermiso ? 'Ejecuta database/actualizaciones/001_permiso_mensajes.sql' : 'Registrado en el catálogo'];
+}
+
 $revisiones[] = ['Ruta base detectada', true, url() ];
 ?>
 <!doctype html>

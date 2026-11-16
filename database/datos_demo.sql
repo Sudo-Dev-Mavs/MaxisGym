@@ -70,3 +70,9 @@ INSERT INTO mensajes_contacto (usuario_id, atendido_por, nombre, apellido, email
   '¿Tienen clases guiadas para personas que nunca han entrenado?', NULL, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY),
  (5, NULL, 'María', 'López', 'maria@example.com', '555-4101', 'Congelar membresía',
   'Voy a salir de viaje dos semanas, ¿puedo pausar mi membresía?', NULL, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY);
+
+-- El mensaje de ejemplo del script base se creó "ahora" pero ya está atendido
+-- en una fecha anterior: se ajusta para que se haya recibido antes de atenderse.
+UPDATE mensajes_contacto
+   SET created_at = fecha_atencion - INTERVAL 18 HOUR, updated_at = fecha_atencion
+ WHERE fecha_atencion IS NOT NULL AND created_at > fecha_atencion;

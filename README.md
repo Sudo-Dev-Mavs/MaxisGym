@@ -38,6 +38,16 @@ así que el sistema funciona sin conexión a internet.
 Si tu MySQL tiene contraseña u otro usuario, copia `config/config.local.example.php`
 como `config/config.local.php` y escribe ahí tus datos.
 
+### Si ya tenías la base de datos cargada
+
+Cuando una versión nueva agrega algo al catálogo, viene un script en
+`database/actualizaciones/` que se aplica sin borrar tus datos:
+```
+mysql -u root maxisgym < database\actualizaciones\001_permiso_mensajes.sql
+```
+(Una instalación nueva con `database/maxisgym.sql` ya lo incluye.)
+`diagnostico.php` avisa si falta alguno.
+
 ## Correos
 
 En modo prueba (`'mail' => ['driver' => 'archivo']` en `config/config.php`) los correos

@@ -7,11 +7,16 @@
  */
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/avisos.php';
+require_once ROOT_PATH . '/app/mensajes.php';
 
 $titulo = $titulo ?? 'Panel';
 $actual = pagina_actual();
 $menu = menu_del_usuario();
-$pendientesAvisos = tiene_permiso('anuncios.ver') ? avisos_sin_leer($yo) : 0;
+// Contadores que se muestran junto a una opción del menú: ruta => [cantidad, texto para lector de pantalla]
+$insignias = [
+    'cuenta/avisos.php'     => [tiene_permiso('anuncios.ver') ? avisos_sin_leer($yo) : 0, 'sin leer'],
+    'empleado/mensajes.php' => [tiene_permiso('mensajes.atender') ? mensajes_pendientes() : 0, 'sin atender'],
+];
 $iniciales = mb_strtoupper(mb_substr($yo['nombre'], 0, 1) . mb_substr($yo['apellido'], 0, 1));
 ?>
 <!doctype html>
@@ -52,9 +57,9 @@ $iniciales = mb_strtoupper(mb_substr($yo['nombre'], 0, 1) . mb_substr($yo['apell
                                <?= $esActual ? 'aria-current="page"' : '' ?>>
                                 <i class="bi <?= e($icono) ?>" aria-hidden="true"></i>
                                 <span><?= e($texto) ?></span>
-                                <?php if ($ruta === 'cuenta/avisos.php' && $pendientesAvisos > 0): ?>
-                                    <span class="badge rounded-pill text-bg-warning ms-auto"><?= $pendientesAvisos ?>
-                                        <span class="visually-hidden">sin leer</span></span>
+                                <?php if (($insignias[$ruta][0] ?? 0) > 0): ?>
+                                    <span class="badge rounded-pill text-bg-warning ms-auto"><?= (int) $insignias[$ruta][0] ?>
+                                        <span class="visually-hidden"><?= e($insignias[$ruta][1]) ?></span></span>
                                 <?php endif; ?>
                             </a>
                         </li>

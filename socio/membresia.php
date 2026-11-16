@@ -21,7 +21,7 @@ if (es_post() && entrada('accion') === 'solicitar_renovacion') {
     $ultima = ultima_membresia($id);
     $yaPidio = valor(
         "SELECT COUNT(*) FROM mensajes_contacto
-          WHERE usuario_id = ? AND asunto LIKE 'Solicitud de renovación%' AND atendido_por IS NULL
+          WHERE usuario_id = ? AND asunto LIKE 'Solicitud de renovación%' AND fecha_atencion IS NULL
             AND created_at > NOW() - INTERVAL 1 DAY",
         [$id]
     );
