@@ -7,6 +7,7 @@ require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/membresias.php';
 require_once ROOT_PATH . '/app/vencimientos.php';
+require_once ROOT_PATH . '/app/mensajes.php';
 
 $yo = requiere_permiso(...PERMISOS_ADMIN);
 
@@ -27,7 +28,7 @@ $pagosMes = (int) valor(
 );
 $porVencer = count(membresias_por_vencer(7));
 $revision = ultima_revision();
-$mensajesPendientes = (int) valor('SELECT COUNT(*) FROM mensajes_contacto WHERE atendido_por IS NULL');
+$mensajesPendientes = mensajes_pendientes();
 
 $ultimosPagos = filas(
     'SELECT pg.monto, pg.fecha_pago, u.nombre, u.apellido, pl.nombre_plan, mp.nombre AS metodo
@@ -84,11 +85,12 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="dato">
+        <?php $etiquetaDato = tiene_permiso('mensajes.atender') ? 'a' : 'div'; ?>
+        <<?= $etiquetaDato ?> class="dato<?= $mensajesPendientes ? ' dato-alerta' : '' ?><?= $etiquetaDato === 'a' ? ' dato-enlace' : '' ?>"<?= $etiquetaDato === 'a' ? ' href="' . url('empleado/mensajes.php') . '"' : '' ?>>
             <p class="dato-etiqueta">Mensajes sin atender</p>
             <p class="dato-valor"><?= $mensajesPendientes ?></p>
-            <p class="dato-nota">del formulario de contacto</p>
-        </div>
+            <p class="dato-nota">del formulario de contacto<?= $etiquetaDato === 'a' ? ' · Ver mensajes' : '' ?></p>
+        </<?= $etiquetaDato ?>>
     </div>
 </div>
 

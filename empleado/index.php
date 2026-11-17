@@ -9,6 +9,8 @@
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/vencimientos.php';
+require_once ROOT_PATH . 
+  '/app/mensajes.php';
 
 $yo = requiere_permiso(...PERMISOS_RECEPCION);
 $veAvisos = tiene_permiso('socios.consultar');
@@ -28,6 +30,8 @@ if (es_post() && entrada('accion') === 'atender_aviso') {
 
 $avisos = $veAvisos ? avisos_vencimiento_pendientes() : [];
 $revision = ultima_revision();
+$mensajesPendientes = tiene_permiso('mensajes.atender') ? mensajes_pendientes() : 0;
+$renovaciones = $mensajesPendientes ? renovaciones_pendientes() : 0;
 
 $titulo = 'Panel de recepción';
 $scripts = ['vencimientos.js'];
@@ -35,6 +39,15 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
 <p class="text-body-secondary mb-4">Hola, <?= e($yo['nombre']) ?>. Esto es lo que tienes a la mano en recepción.</p>
+
+<?php if ($mensajesPendientes): ?>
+    <a class="aviso-mensajes mb-4" href="<?= url('empleado/mensajes.php') ?>">
+        <i class="bi bi-envelope-exclamation" aria-hidden="true"></i>
+        <span><strong><?= $mensajesPendientes ?> <?= $mensajesPendientes === 1 ? 'mensaje sin atender' : 'mensajes sin atender' ?></strong><?php if ($renovaciones): ?>,
+            <?= $renovaciones === 1 ? 'incluye 1 solicitud de renovación' : "incluye $renovaciones solicitudes de renovación" ?><?php endif; ?>.</span>
+        <span class="ms-auto text-nowrap">Ver mensajes <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+    </a>
+<?php endif; ?>
 
 <div class="atajos atajos-4 mb-4">
     <?php if (tiene_permiso('pagos.registrar')): ?>
