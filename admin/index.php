@@ -6,6 +6,7 @@
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/membresias.php';
+require_once ROOT_PATH . '/app/vencimientos.php';
 
 $yo = requiere_permiso(...PERMISOS_ADMIN);
 
@@ -25,6 +26,7 @@ $pagosMes = (int) valor(
     "SELECT COUNT(*) FROM pagos WHERE fecha_pago BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()"
 );
 $porVencer = count(membresias_por_vencer(7));
+$revision = ultima_revision();
 $mensajesPendientes = (int) valor('SELECT COUNT(*) FROM mensajes_contacto WHERE atendido_por IS NULL');
 
 $ultimosPagos = filas(
@@ -46,6 +48,18 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
 <p class="text-body-secondary mb-4">Hola, <?= e($yo['nombre']) ?>. Así va el gimnasio hoy, <?= date('j') ?> de <?= $meses[(int) date('n')] ?>.</p>
+
+<?php if (!$revision || $revision['atrasada']): ?>
+    <div class="alert alert-warning d-flex gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
+        <div>
+            <strong>La revisión diaria de vencimientos <?= $revision ? 'no corre desde ' . e(texto_ultima_revision($revision['fecha'])) : 'no se ha ejecutado' ?>.</strong>
+            Sin ella no se envían los correos de 7, 3 y 1 día ni se generan los avisos para recepción.
+            Prográmala en el Programador de tareas de Windows como indica el README (sección <em>Tarea programada</em>) o ejecútala a mano:
+            <code class="d-block mt-1">php tareas/notificar_vencimientos.php</code>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">

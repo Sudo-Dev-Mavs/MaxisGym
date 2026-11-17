@@ -45,6 +45,38 @@ no se envían: cada uno se guarda como página HTML en `storage/correos/`.
 Ábrelos con doble clic para ver, por ejemplo, el enlace para restablecer la contraseña.
 Para enviarlos de verdad, configura el SMTP de Laragon y cambia el driver a `'mail'`.
 
+## Tarea programada (avisos de vencimiento)
+
+`tareas/notificar_vencimientos.php` debe ejecutarse una vez al día. Cada vez:
+
+1. Marca como **vencidas** las membresías cuya fecha de fin ya pasó.
+2. Registra el aviso de **7, 3 o 1 día** de cada membresía por vencer
+   (recepción lo ve en su panel y lo marca como atendido).
+3. Envía el **correo** al socio (en modo prueba queda en `storage/correos/`).
+
+Se puede ejecutar varias veces el mismo día: no repite avisos ni correos.
+Si un día no corre (computadora apagada), al día siguiente envía el aviso que
+quedó pendiente. Cada ejecución se anota en `storage/logs/tareas.log`.
+
+**Probarla a mano** (terminal de Laragon):
+```
+cd C:\laragon\www\maxisgym
+php tareas\notificar_vencimientos.php
+```
+
+**Programarla en Windows** (todos los días a las 6:00). En una terminal `cmd`:
+```
+schtasks /create /tn "MaxisGym vencimientos" /sc daily /st 06:00 /tr "C:\laragon\bin\php\<carpeta-php>\php.exe C:\laragon\www\maxisgym\tareas\notificar_vencimientos.php"
+```
+Cambia `<carpeta-php>` por la que tengas dentro de `C:\laragon\bin\php\`.
+También se puede crear desde *Programador de tareas → Crear tarea básica*.
+MySQL debe estar encendido a esa hora (Laragon abierto).
+
+**En Linux** (cron): `0 6 * * * php /ruta/a/maxisgym/tareas/notificar_vencimientos.php`
+
+Si la tarea no ha corrido en las últimas 26 horas, el panel del administrador y
+el de recepción muestran una advertencia.
+
 ## Usuarios de prueba
 
 Contraseña de todos: `password`
@@ -80,5 +112,7 @@ maxisgym/
 ├── assets/         CSS, JavaScript, imágenes y librerías locales
 ├── config/         Configuración (base de datos, zona horaria, correo)
 ├── database/       Scripts SQL (estructura y datos de demostración)
+├── tareas/         Tareas programadas que se ejecutan desde la terminal
+├── storage/        Correos de prueba y bitácoras (no se sube a GitHub)
 └── *.php           Sitio público, login, registro y cierre de sesión
 ```
