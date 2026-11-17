@@ -9,7 +9,8 @@
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/vencimientos.php';
-require_once ROOT_PATH . '/app/mensajes.php';
+require_once ROOT_PATH . 
+  '/app/mensajes.php';
 
 $yo = requiere_permiso(...PERMISOS_RECEPCION);
 $veAvisos = tiene_permiso('socios.consultar');
