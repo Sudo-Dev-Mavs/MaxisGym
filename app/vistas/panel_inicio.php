@@ -8,6 +8,7 @@
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/avisos.php';
 require_once ROOT_PATH . '/app/mensajes.php';
+require_once ROOT_PATH . '/app/componentes.php';
 
 $titulo = $titulo ?? 'Panel';
 $actual = pagina_actual();
@@ -23,7 +24,8 @@ $iniciales = mb_strtoupper(mb_substr($yo['nombre'], 0, 1) . mb_substr($yo['apell
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0E1013">
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title><?= e($titulo) ?> · MaxisGym</title>
     <link rel="icon" href="<?= asset('img/logo.svg') ?>" type="image/svg+xml">
@@ -77,7 +79,7 @@ $iniciales = mb_strtoupper(mb_substr($yo['nombre'], 0, 1) . mb_substr($yo['apell
 
     <div class="panel-cuerpo">
         <header class="panel-barra">
-            <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas"
+            <button class="btn btn-outline-secondary d-lg-none flex-shrink-0" type="button" data-bs-toggle="offcanvas"
                     data-bs-target="#lateral" aria-controls="lateral" aria-label="Abrir menú">
                 <i class="bi bi-list" aria-hidden="true"></i>
             </button>

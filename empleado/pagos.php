@@ -84,7 +84,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
 
 <div class="row g-4">
     <div class="col-xl-5">
-        <form method="post" action="<?= url('empleado/pagos.php') ?>" class="tarjeta" id="form-pago" novalidate
+        <form method="post" action="<?= url('empleado/pagos.php') ?>" class="tarjeta tarjeta-fija" id="form-pago" novalidate
               data-api="<?= url('api/buscar_socios.php') ?>">
             <?= csrf_campo() ?>
             <h2 class="h4 mb-3">Formulario de pago</h2>

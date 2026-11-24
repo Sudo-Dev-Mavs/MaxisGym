@@ -38,6 +38,27 @@ así que el sistema funciona sin conexión a internet.
 Si tu MySQL tiene contraseña u otro usuario, copia `config/config.local.example.php`
 como `config/config.local.php` y escribe ahí tus datos.
 
+## Instalación en Linux (MySQL en Docker)
+
+Requiere un contenedor de MySQL llamado `mysql` con la base `maxisgym` cargada
+y un `config/config.local.php` con tu usuario y contraseña de MySQL.
+
+**Opción A: PHP instalado en tu equipo**
+```
+cd MaxisGym
+php -S localhost:8000
+```
+Abre `http://localhost:8000/`. (Este servidor no lee los `.htaccess`, sirve solo para desarrollo).
+
+**Opción B: PHP + Apache en Docker** (igual que Laragon)
+```
+docker network create maxisgym-net          # una sola vez
+docker network connect maxisgym-net mysql   # una sola vez
+docker compose up -d                         # encender  → http://localhost:8080/
+docker compose down                          # apagar
+```
+Tarea de vencimientos a mano: `docker compose exec -u www-data web php tareas/notificar_vencimientos.php`
+
 ### Si ya tenías la base de datos cargada
 
 Cuando una versión nueva agrega algo al catálogo, viene un script en
@@ -47,6 +68,18 @@ mysql -u root maxisgym < database\actualizaciones\001_permiso_mensajes.sql
 ```
 (Una instalación nueva con `database/maxisgym.sql` ya lo incluye.)
 `diagnostico.php` avisa si falta alguno.
+
+## Diseño de la interfaz
+
+- Estilos propios en `assets/css/app.css` (sobre Bootstrap 5.3), organizados por secciones:
+  variables, botones, sitio público, páginas internas y paneles. Los colores de la marca están
+  en `:root` (por ejemplo, `--seguridad` es el amarillo de las acciones).
+- Piezas de interfaz reutilizables en `app/componentes.php`: `foto()` (imagen con versión para
+  celular), `tarjeta_plan()`, `disco_progreso()` (anillo de la membresía) y `encabezado_pagina()`.
+- `assets/js/sitio.js`: barra que se vuelve sólida al bajar, menú del celular, la frase que se
+  enciende al hacer scroll y las fotos que se revelan al entrar en pantalla.
+- `assets/js/panel.js`: en celular, cada fila de las tablas de los paneles se muestra como tarjeta.
+- Con "reducir movimiento" activado en el sistema, las animaciones se quitan y todo se ve completo.
 
 ## Correos
 

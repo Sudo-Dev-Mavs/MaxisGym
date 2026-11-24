@@ -1,9 +1,17 @@
-Fotos de la pantalla "Acerca de".
+Fotos de las instalaciones (Inicio, Acerca de y Contacto).
 
-Coloca aquí fotos reales del gimnasio con estos nombres exactos:
+Las imágenes actuales son de muestra (generadas con IA a partir de los renders 3D originales). Para usar fotos reales del gimnasio,
+reemplaza estos archivos conservando los nombres:
   pesas.jpg    -> Área de pesas
   cardio.jpg   -> Zona de cardio
   clases.jpg   -> Salón de clases
 
-Formato recomendado: JPG horizontal (4:3), unos 1200 x 900 px.
+Junto a cada una hay una versión ligera para celular (pesas-720.jpg, etc.).
+Si cambias la foto grande, cambia también (o borra) su versión -720: el sitio
+elige automáticamente la que mejor le queda a cada pantalla.
+
+Formato recomendado: JPG horizontal (4:3), 1440 x 1080 px; la versión -720 a 720 x 540 px.
 Si una foto no existe, la página muestra un recuadro con ícono en su lugar.
+
+Las imágenes generales del sitio (portada, discos y acceso) están en assets/img/sitio/
+y siguen la misma regla de nombres (hero.jpg, hero-1200.jpg, hero-760.jpg...).

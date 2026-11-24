@@ -116,12 +116,15 @@ function precio_corto($precio): string
 function disco_html(array $plan, string $enlace = ''): string
 {
     $etiqueta = $enlace !== '' ? 'a' : 'div';
-    $href = $enlace !== '' ? ' href="' . e($enlace) . '"' : '';
     $texto = $plan['nombre_plan'] . ': ' . precio_corto($plan['precio']) . ' por ' . duracion_texto((int) $plan['duracion_dias']);
+    // Sin enlace, el disco es decorativo: el nombre y el precio ya se leen en la tarjeta del plan.
+    $atributos = $enlace !== ''
+        ? ' href="' . e($enlace) . '" aria-label="' . e($texto) . '"'
+        : ' aria-hidden="true"';
 
-    return '<' . $etiqueta . ' class="disco disco-' . e($plan['color']) . '"' . $href . ' aria-label="' . e($texto) . '">'
-        . '<span class="disco-nombre">' . e($plan['nombre_plan']) . '</span>'
-        . '<span class="disco-precio">' . e(precio_corto($plan['precio']))
-        . '<small>' . e(duracion_texto((int) $plan['duracion_dias'])) . '</small></span>'
+    // El nombre del plan no va dentro del disco: un nombre largo no cabe en el círculo.
+    return '<' . $etiqueta . ' class="disco disco-' . e($plan['color']) . '"' . $atributos . '>'
+        . '<span class="disco-precio">' . e(precio_corto($plan['precio'])) . '</span>'
+        . '<span class="disco-duracion">' . e(duracion_texto((int) $plan['duracion_dias'])) . '</span>'
         . '</' . $etiqueta . '>';
 }
