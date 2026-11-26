@@ -26,7 +26,6 @@ if (es_post()) {
         'socio_id'       => (int) entrada('socio_id'),
         'plan_id'        => (int) entrada('plan_id'),
         'metodo_pago_id' => (int) entrada('metodo_pago_id'),
-        'monto'          => entrada('monto'),
         'fecha_pago'     => entrada('fecha_pago'),
     ];
 
@@ -41,15 +40,14 @@ if (es_post()) {
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $r = crear_membresia_con_pago($socio['id'], $plan, $datos['metodo_pago_id'],
-                (float) str_replace(',', '', $datos['monto']), $datos['fecha_pago'], (int) $yo['id']);
+            $r = crear_membresia_con_pago($socio['id'], $plan, $datos['metodo_pago_id'], $datos['fecha_pago'], (int) $yo['id']);
             $pdo->commit();
         } catch (Throwable $ex) {
             $pdo->rollBack();
             throw $ex;
         }
 
-        $mensaje = 'Pago de ' . dinero($datos['monto']) . ' registrado para ' . $socio['nombre'] . ' ' . $socio['apellido']
+        $mensaje = 'Pago de ' . dinero($plan['precio']) . ' registrado para ' . $socio['nombre'] . ' ' . $socio['apellido']
             . '. ' . $plan['nombre_plan'] . ' del ' . fecha($r['fecha_inicio']) . ' al ' . fecha($r['fecha_fin'])
             . ($r['renovacion'] ? ' (inicia al terminar su periodo actual).' : '.');
 
@@ -73,6 +71,8 @@ $pre = $preId ? socio_por_id($preId) : null;
 $preMembresia = $pre ? ultima_membresia((int) $pre['id']) : null;
 
 $planes = planes_para_venta();
+// Plan sugerido: el del intento anterior, o el que ya tenía el socio
+$planInicial = plan_elegido($planes, (int) ($_SESSION['viejo']['plan_id'] ?? ($preMembresia['plan_id'] ?? 0)));
 $metodos = metodos_pago_activos();
 $recientes = array_map('pago_para_tabla', pagos_recientes(15));
 $v = fn(string $c, string $d = '') => e($_SESSION['viejo'][$c] ?? $d);
@@ -119,7 +119,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <label class="form-label" for="plan_id">Plan</label>
                     <select class="form-select" id="plan_id" name="plan_id" required>
                         <?php foreach ($planes as $p): ?>
-                            <?php $sel = (int) ($_SESSION['viejo']['plan_id'] ?? ($preMembresia['plan_id'] ?? 0)) === (int) $p['id']; ?>
+                            <?php $sel = (int) $p['id'] === (int) ($planInicial['id'] ?? 0); ?>
                             <option value="<?= (int) $p['id'] ?>" data-precio="<?= e($p['precio']) ?>" <?= $sel ? 'selected' : '' ?>>
                                 <?= e($p['nombre_plan']) ?> (<?= e(dinero($p['precio'])) ?>, <?= (int) $p['duracion_dias'] ?> días)
                             </option>
@@ -128,13 +128,13 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <div class="invalid-feedback d-block" data-error="plan_id"><?= e($errores['plan_id'] ?? '') ?></div>
                 </div>
                 <div class="col-sm-6">
-                    <label class="form-label" for="monto">Monto</label>
+                    <label class="form-label" for="monto">Monto a cobrar</label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
-                        <input class="form-control" id="monto" name="monto" type="number" min="0.01" step="0.01"
-                               value="<?= $v('monto', (string) ($planes[0]['precio'] ?? '')) ?>" required>
+                        <input class="form-control campo-fijo" id="monto" type="text" readonly aria-describedby="ayuda-monto"
+                               value="<?= e(number_format((float) ($planInicial['precio'] ?? 0), 2)) ?>">
                     </div>
-                    <div class="invalid-feedback d-block" data-error="monto"><?= e($errores['monto'] ?? '') ?></div>
+                    <div class="form-text" id="ayuda-monto">Es el precio del plan elegido.</div>
                 </div>
                 <div class="col-sm-6">
                     <label class="form-label" for="fecha_pago">Fecha de pago</label>

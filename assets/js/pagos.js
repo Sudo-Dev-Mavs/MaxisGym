@@ -14,11 +14,13 @@
     const alerta = document.getElementById('alerta-pago');
     const boton = document.getElementById('boton-pago');
 
-    // Al cambiar de plan, el monto toma el precio del plan
-    plan.addEventListener('change', () => {
-        monto.value = plan.selectedOptions[0]?.dataset.precio || '';
-    });
-    if (!monto.value) monto.value = plan.selectedOptions[0]?.dataset.precio || '';
+    // El monto no se captura: muestra el precio del plan elegido (el servidor cobra ese mismo precio)
+    const mostrarMonto = () => {
+        const precio = plan.selectedOptions[0]?.dataset.precio;
+        monto.value = precio ? Number(precio).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    };
+    plan.addEventListener('change', mostrarMonto);
+    mostrarMonto();
 
     function elegir(s) {
         campoSocio.value = s.id;
