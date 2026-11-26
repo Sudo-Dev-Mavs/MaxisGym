@@ -1,6 +1,7 @@
 /**
- * Registrar pagos: elegir socio con el buscador AJAX, rellenar el monto con
- * el precio del plan y enviar el pago con fetch sin recargar la página.
+ * Registrar pagos: elegir socio con el buscador AJAX, mostrar qué se le puede
+ * cobrar (inscribir, renovar, mejorar de plan o nada) y enviar el pago con
+ * fetch sin recargar la página.
  */
 (function () {
     const form = document.getElementById('form-pago');
@@ -11,16 +12,65 @@
     const buscar = document.getElementById('buscar-socio');
     const plan = document.getElementById('plan_id');
     const monto = document.getElementById('monto');
+    const ayudaMonto = document.getElementById('ayuda-monto');
+    const aviso = document.getElementById('aviso-pago');
     const alerta = document.getElementById('alerta-pago');
     const boton = document.getElementById('boton-pago');
 
-    // El monto no se captura: muestra el precio del plan elegido (el servidor cobra ese mismo precio)
+    const numero = (n) => Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // El monto no se captura: lo calcula el servidor (precio del plan, menos el crédito si es una mejora)
     const mostrarMonto = () => {
-        const precio = plan.selectedOptions[0]?.dataset.precio;
-        monto.value = precio ? Number(precio).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        const op = plan.selectedOptions[0];
+        monto.value = op?.dataset.monto ? numero(op.dataset.monto) : '';
+        const credito = Number(op?.dataset.credito || 0);
+        ayudaMonto.textContent = !op?.dataset.monto ? ''
+            : credito > 0
+                ? 'Precio $' + numero(op.dataset.precio) + ' menos $' + numero(credito) + ' que no ha usado de su ' + plan.dataset.mejoraDe + '.'
+                : 'Es el precio del plan elegido.';
     };
     plan.addEventListener('change', mostrarMonto);
     mostrarMonto();
+
+    // Rehace la lista de planes con lo que se le puede cobrar al socio elegido
+    function aplicarOpciones(op) {
+        const anterior = plan.value;
+        plan.replaceChildren(...op.planes.map((p) => {
+            const o = new Option(p.nombre + ' ($' + numero(p.precio) + ', ' + p.duracion + ' días)', p.id);
+            o.dataset.precio = p.precio;
+            o.dataset.monto = p.monto;
+            o.dataset.credito = p.credito;
+            return o;
+        }));
+        if (!op.planes.length) plan.append(new Option('Sin planes disponibles', ''));
+        const preferido = String(op.sugerido ?? anterior);
+        if (plan.querySelector('option[value="' + preferido + '"]')) plan.value = preferido;
+        plan.dataset.mejoraDe = op.mejora ? op.mejora.plan : '';
+
+        const bloqueado = op.modo === 'bloqueado' || !op.planes.length;
+        plan.disabled = bloqueado;
+        boton.disabled = bloqueado;
+        aviso.textContent = op.aviso;
+        aviso.hidden = !op.aviso;
+        aviso.className = 'alert small py-2 mb-3 ' + (op.modo === 'bloqueado' ? 'alert-warning' : 'alert-info');
+        mostrarMonto();
+    }
+
+    let ultimaConsulta = 0;
+    async function cargarOpciones(socioId) {
+        const consulta = ++ultimaConsulta;
+        plan.disabled = true;
+        boton.disabled = true;
+        const r = await peticion(form.dataset.opciones + (socioId ? '?socio=' + encodeURIComponent(socioId) : ''));
+        if (consulta !== ultimaConsulta) return; // mientras tanto se eligió otro socio
+        if (r.ok) {
+            aplicarOpciones(r.opciones);
+        } else {
+            mostrarAlerta('danger', r.mensaje || 'No se pudieron cargar los planes de este socio.');
+            plan.disabled = false;
+            boton.disabled = false;
+        }
+    }
 
     function elegir(s) {
         campoSocio.value = s.id;
@@ -31,12 +81,8 @@
             document.createTextNode(s.plan ? s.plan + ': ' + s.estado + (s.vence ? ', hasta ' + s.vence : '') : 'Sin membresía'));
         tarjeta.hidden = false;
         buscar.closest('.buscador').hidden = true;
-        // Sugiere el mismo plan que tenía
-        if (s.plan_id && plan.querySelector('option[value="' + s.plan_id + '"]')) {
-            plan.value = String(s.plan_id);
-            plan.dispatchEvent(new Event('change'));
-        }
         limpiarErrores();
+        cargarOpciones(s.id);
     }
 
     document.getElementById('cambiar-socio').addEventListener('click', () => {
@@ -44,6 +90,7 @@
         tarjeta.hidden = true;
         buscar.closest('.buscador').hidden = false;
         buscar.focus();
+        cargarOpciones(null);
     });
     if (campoSocio.value) buscar.closest('.buscador').hidden = true;
 
@@ -98,7 +145,7 @@
         boton.disabled = true;
         boton.textContent = 'Registrando…';
         const r = await peticion(form.action, { method: 'POST', body: new FormData(form) });
-        boton.disabled = false;
+        boton.disabled = plan.disabled;
         boton.textContent = 'Registrar pago';
 
         if (r.ok) {
