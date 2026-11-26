@@ -22,7 +22,6 @@ if (es_post()) {
     $pago = [
         'plan_id'        => (int) entrada('plan_id'),
         'metodo_pago_id' => (int) entrada('metodo_pago_id'),
-        'monto'          => entrada('monto'),
         'fecha_pago'     => entrada('fecha_pago'),
     ];
 
@@ -52,8 +51,7 @@ if (es_post()) {
                 ]
             );
             $socioId = (int) $pdo->lastInsertId();
-            $r = crear_membresia_con_pago($socioId, $plan, $pago['metodo_pago_id'],
-                (float) str_replace(',', '', $pago['monto']), $pago['fecha_pago'], (int) $yo['id']);
+            $r = crear_membresia_con_pago($socioId, $plan, $pago['metodo_pago_id'], $pago['fecha_pago'], (int) $yo['id']);
             $enlace = generar_enlace_contrasena($persona['email']);
             $pdo->commit();
         } catch (Throwable $ex) {
@@ -85,7 +83,7 @@ if (es_post()) {
 $planes = planes_para_venta();
 $metodos = metodos_pago_activos();
 $v = fn(string $c, string $d = '') => e($_SESSION['viejo'][$c] ?? $d);
-$planElegido = (int) ($_SESSION['viejo']['plan_id'] ?? 0);
+$planInicial = plan_elegido($planes, (int) ($_SESSION['viejo']['plan_id'] ?? 0));
 
 $titulo = 'Alta de socios';
 $scripts = ['alta_socio.js'];
@@ -136,7 +134,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                 <label class="form-label" for="plan_id">Plan seleccionado</label>
                 <select class="form-select<?= clase_invalida($errores, 'plan_id') ?>" id="plan_id" name="plan_id" required>
                     <?php foreach ($planes as $p): ?>
-                        <option value="<?= (int) $p['id'] ?>" data-precio="<?= e($p['precio']) ?>" <?= $planElegido === (int) $p['id'] ? 'selected' : '' ?>>
+                        <option value="<?= (int) $p['id'] ?>" data-precio="<?= e($p['precio']) ?>" <?= (int) ($planInicial['id'] ?? 0) === (int) $p['id'] ? 'selected' : '' ?>>
                             <?= e($p['nombre_plan']) ?> (<?= e(dinero($p['precio'])) ?>, <?= (int) $p['duracion_dias'] ?> días)
                         </option>
                     <?php endforeach; ?>
@@ -154,13 +152,13 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                 <?= mensaje_error($errores, 'metodo_pago_id') ?>
             </div>
             <div class="col-sm-6">
-                <label class="form-label" for="monto">Monto</label>
-                <div class="input-group has-validation">
+                <label class="form-label" for="monto">Monto a cobrar</label>
+                <div class="input-group">
                     <span class="input-group-text">$</span>
-                    <input class="form-control<?= clase_invalida($errores, 'monto') ?>" id="monto" name="monto" type="number" min="0.01" step="0.01"
-                           value="<?= $v('monto', (string) ($planes[0]['precio'] ?? '')) ?>" required>
-                    <?= mensaje_error($errores, 'monto') ?>
+                    <input class="form-control campo-fijo" id="monto" type="text" readonly aria-describedby="ayuda-monto"
+                           value="<?= e(number_format((float) ($planInicial['precio'] ?? 0), 2)) ?>">
                 </div>
+                <div class="form-text" id="ayuda-monto">Es el precio del plan elegido.</div>
             </div>
             <div class="col-sm-6">
                 <label class="form-label" for="fecha_pago">Fecha de pago</label>

@@ -22,9 +22,21 @@ function planes_para_venta(): array
     return filas('SELECT id, nombre_plan, precio, duracion_dias FROM planes WHERE activo = 1 ORDER BY precio');
 }
 
+/** Plan que aparece elegido en el formulario: el de $planId si está a la venta, si no el primero. */
+function plan_elegido(array $planes, int $planId): ?array
+{
+    foreach ($planes as $p) {
+        if ((int) $p['id'] === $planId) {
+            return $p;
+        }
+    }
+    return $planes[0] ?? null;
+}
+
 /**
- * Valida los datos de un pago. $d: plan_id, metodo_pago_id, monto, fecha_pago.
- * El monto debe coincidir exactamente con el precio del plan elegido.
+ * Valida los datos de un pago. $d: plan_id, metodo_pago_id, fecha_pago.
+ * El monto no se captura: siempre es el precio del plan elegido
+ * (lo pone crear_membresia_con_pago), así no puede quedar mal escrito.
  * Devuelve [errores, plan] (plan = fila del plan elegido o null).
  */
 function validar_pago(array $d): array
@@ -36,14 +48,6 @@ function validar_pago(array $d): array
     }
     if (!valor('SELECT COUNT(*) FROM metodos_pago WHERE id = ? AND activo = 1', [(int) ($d['metodo_pago_id'] ?? 0)])) {
         $errores['metodo_pago_id'] = 'Elige el método de pago.';
-    }
-    $monto = str_replace(',', '', (string) ($d['monto'] ?? ''));
-    if (!is_numeric($monto) || $monto <= 0 || $monto > 999999.99) {
-        $errores['monto'] = 'Escribe un monto mayor a cero.';
-    } elseif ($plan && (int) round((float) $monto * 100) !== (int) round((float) $plan['precio'] * 100)) {
-        // El pago debe cubrir exactamente el precio del plan (se compara en centavos
-        // para evitar errores de redondeo con decimales)
-        $errores['monto'] = 'El monto debe ser igual al precio del plan: ' . dinero($plan['precio']) . '.';
     }
     $f = DateTime::createFromFormat('!Y-m-d', (string) ($d['fecha_pago'] ?? ''));
     if (!$f || $f->format('Y-m-d') !== $d['fecha_pago']) {
@@ -57,10 +61,11 @@ function validar_pago(array $d): array
 }
 
 /**
- * Crea la membresía y su pago. Debe llamarse dentro de una transacción.
+ * Crea la membresía y su pago por el precio del plan. Debe llamarse dentro de una transacción.
+ * El pago guarda el precio de ese momento: si después cambia el precio del plan, el historial no cambia.
  * Devuelve los datos del periodo creado.
  */
-function crear_membresia_con_pago(int $usuarioId, array $plan, int $metodoId, float $monto, string $fechaPago, int $empleadoId): array
+function crear_membresia_con_pago(int $usuarioId, array $plan, int $metodoId, string $fechaPago, int $empleadoId): array
 {
     // Si tiene un periodo vigente o ya pagado por adelantado, el nuevo empieza al terminar el último
     $ultimoFin = valor(
@@ -83,7 +88,7 @@ function crear_membresia_con_pago(int $usuarioId, array $plan, int $metodoId, fl
     consulta(
         'INSERT INTO pagos (membresia_id, metodo_pago_id, registrado_por, monto, fecha_pago, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
-        [$membresiaId, $metodoId, $empleadoId, round($monto, 2), $fechaPago]
+        [$membresiaId, $metodoId, $empleadoId, $plan['precio'], $fechaPago]
     );
 
     return [
