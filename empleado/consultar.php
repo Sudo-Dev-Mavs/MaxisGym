@@ -1,9 +1,12 @@
 <?php
 /**
  * Consultar información de socios — permiso socios.consultar.
- * Búsqueda por nombre, correo o ID. Con JavaScript los resultados se
- * actualizan mientras se escribe (AJAX a api/buscar_socios.php);
- * sin JavaScript, el formulario funciona con un envío normal.
+ *
+ * Buscador con sugerencias: mientras se escribe aparece una lista con los
+ * socios que coinciden (AJAX a api/buscar_socios.php). Al elegir uno se
+ * muestra su ficha; con Enter (o "Ver todos") se muestran todas las
+ * coincidencias en una tabla, p. ej. todos los que se llaman igual.
+ * Sin JavaScript, el formulario funciona con un envío normal (tabla).
  */
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/membresias.php';
@@ -12,32 +15,41 @@ require_once ROOT_PATH . '/app/socios.php';
 $yo = requiere_permiso('socios.consultar');
 
 $q = parametro('q');
-$resultado = $q !== '' ? buscar_socios($q, 'activos', 25) : ['socios' => [], 'total' => 0];
+$resultado = $q !== '' ? buscar_socios($q, 'activos', 50) : ['socios' => [], 'total' => 0];
 $puedeCobrar = tiene_permiso('pagos.registrar');
 
 $titulo = 'Consultar socios';
-$scripts = ['buscador.js', 'consultar.js'];
+$scripts = ['consultar.js'];
 require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
-<form method="get" action="<?= url('empleado/consultar.php') ?>" class="tarjeta mb-3" role="search" id="form-consulta"
+<form method="get" action="<?= url('empleado/consultar.php') ?>" class="buscador buscador-grande" role="search" id="form-consulta"
       data-api="<?= url('api/buscar_socios.php') ?>" data-pagos="<?= $puedeCobrar ? url('empleado/pagos.php') : '' ?>">
-    <label class="form-label" for="q">Buscar datos de socios por nombre, correo o ID</label>
-    <div class="d-flex gap-2">
-        <input class="form-control form-control-lg" id="q" name="q" value="<?= e($q) ?>" placeholder="Ej. Juan Pérez o 3" autocomplete="off" autofocus>
-        <button class="btn btn-outline-dark px-4" type="submit">Buscar</button>
-    </div>
+    <label class="visually-hidden" for="q">Buscar socios por nombre, correo o ID</label>
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <input class="form-control" id="q" name="q" type="search" value="<?= e($q) ?>"
+           placeholder="Nombre, correo o ID del socio" autocomplete="off" autofocus
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugerencias"
+           aria-describedby="resumen-consulta">
+    <button class="btn btn-dark" type="submit">Ver todos</button>
+    <div class="list-group buscador-resultados" id="sugerencias" role="listbox" aria-label="Socios que coinciden" hidden></div>
 </form>
 
-<p class="text-body-secondary small" id="resumen-consulta" aria-live="polite">
-    <?= $q === '' ? 'Escribe para buscar. Los resultados aparecen mientras escribes.'
-        : e($resultado['total'] . ($resultado['total'] === 1 ? ' resultado' : ' resultados') . ' para "' . $q . '".') ?>
+<p class="text-body-secondary small mt-2 mb-4" id="resumen-consulta" aria-live="polite">
+    <?php if ($q === ''): ?>
+        Escribe y elige un socio de la lista para ver su ficha. Presiona Enter para ver todas las coincidencias.
+    <?php else: ?>
+        <?= e($resultado['total'] . ($resultado['total'] === 1 ? ' socio coincide' : ' socios coinciden') . ' con "' . $q . '".') ?>
+    <?php endif; ?>
 </p>
 
-<div class="tarjeta-tabla">
+<!-- Ficha del socio elegido en la lista (la llena assets/js/consultar.js) -->
+<section id="ficha-socio" class="mb-4" hidden></section>
+
+<div class="tarjeta-tabla" id="tabla-consulta" <?= $q === '' ? 'hidden' : '' ?>>
     <div class="table-responsive">
         <table class="table mb-0 align-middle">
-            <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Plan</th><th>Estado</th><?= $puedeCobrar ? '<th></th>' : '' ?></tr></thead>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Plan</th><th>Estado</th><?= $puedeCobrar ? '<th><span class="visually-hidden">Acciones</span></th>' : '' ?></tr></thead>
             <tbody id="resultados-consulta">
             <?php foreach ($resultado['socios'] as $s): ?>
                 <tr>
@@ -52,6 +64,9 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
+            <?php if ($q !== '' && !$resultado['socios']): ?>
+                <tr><td colspan="<?= $puedeCobrar ? 7 : 6 ?>" class="text-body-secondary">Ningún socio activo coincide.</td></tr>
+            <?php endif; ?>
             </tbody>
         </table>
     </div>
