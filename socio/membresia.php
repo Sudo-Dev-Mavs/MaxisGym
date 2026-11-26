@@ -8,6 +8,7 @@
  * "Renovar membresía": el pago se hace en recepción, así que el botón envía
  * una solicitud que llega como mensaje al gimnasio (tabla mensajes_contacto,
  * ligada al socio con usuario_id) para que lo contacten.
+ * Sólo se ofrece cuando la membresía está por vencer o ya venció (ver puede_renovar()).
  */
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/membresias.php';
@@ -16,9 +17,17 @@ require_once ROOT_PATH . '/app/planes.php';
 $yo = requiere_permiso('membresia.ver');
 $id = (int) $yo['id'];
 
+$vigente = membresia_vigente($id);
+$ultima = $vigente ?? ultima_membresia($id);
+$renovacion = renovacion_pendiente($id);
+$puedeRenovar = puede_renovar($vigente, $ultima, $renovacion);
+
 if (es_post() && entrada('accion') === 'solicitar_renovacion') {
     csrf_verificar();
-    $ultima = ultima_membresia($id);
+    if (!$puedeRenovar) {
+        flash('info', 'La renovación se habilita cuando a tu membresía le quedan ' . DIAS_POR_VENCER . ' días o menos, o cuando ya venció.');
+        redirigir('socio/membresia.php');
+    }
     $yaPidio = valor(
         "SELECT COUNT(*) FROM mensajes_contacto
           WHERE usuario_id = ? AND asunto LIKE 'Solicitud de renovación%' AND fecha_atencion IS NULL
@@ -44,9 +53,6 @@ if (es_post() && entrada('accion') === 'solicitar_renovacion') {
     redirigir('socio/membresia.php');
 }
 
-$vigente = membresia_vigente($id);
-$ultima = $vigente ?? ultima_membresia($id);
-$renovacion = renovacion_pendiente($id);
 $beneficios = $ultima ? filas(
     'SELECT b.descripcion FROM plan_beneficio pb JOIN beneficios b ON b.id = pb.beneficio_id
       WHERE pb.plan_id = ? ORDER BY b.descripcion',
@@ -62,7 +68,7 @@ $titulo = 'Mi membresía';
 require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
-<?php if ($vigente && !$renovacion && $vigente['dias_restantes'] <= 7): ?>
+<?php if ($vigente && !$renovacion && $vigente['dias_restantes'] <= DIAS_POR_VENCER): ?>
     <div class="alert alert-warning d-flex gap-2" role="alert">
         <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
         <div>Tu membresía <?= e(texto_dias((int) $vigente['dias_restantes'])) ?>.</div>
@@ -99,7 +105,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                 Ya pagaste tu siguiente periodo: <?= e($renovacion['nombre_plan']) ?> del <?= e(fecha($renovacion['fecha_inicio'])) ?>
                 al <?= e(fecha($renovacion['fecha_fin'])) ?>.
             </div>
-        <?php else: ?>
+        <?php elseif ($puedeRenovar): ?>
             <form method="post" class="tarjeta h-auto d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <?= csrf_campo() ?>
                 <input type="hidden" name="accion" value="solicitar_renovacion">

@@ -40,7 +40,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
         <div>Ya renovaste: tu <?= e($renovacion['nombre_plan']) ?> continúa del <?= e(fecha($renovacion['fecha_inicio'])) ?>
             al <?= e(fecha($renovacion['fecha_fin'])) ?>.</div>
     </div>
-<?php elseif ($membresia && $membresia['dias_restantes'] <= 7): ?>
+<?php elseif ($membresia && $membresia['dias_restantes'] <= DIAS_POR_VENCER): ?>
     <div class="alert alert-warning d-flex flex-wrap gap-2 align-items-center" role="alert">
         <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
         <div class="flex-grow-1">Tu membresía <?= e(texto_dias((int) $membresia['dias_restantes'])) ?> (<?= e(fecha($membresia['fecha_fin'])) ?>).

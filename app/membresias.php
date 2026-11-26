@@ -10,6 +10,9 @@
 
 const SQL_VIGENTE = "m.estado <> 'cancelada' AND m.fecha_inicio <= CURDATE() AND m.fecha_fin >= CURDATE()";
 
+/** Días antes del vencimiento a partir de los cuales una membresía está "por vencer". */
+const DIAS_POR_VENCER = 7;
+
 /** Membresía vigente de un socio (la que vence más tarde), con su plan. */
 function membresia_vigente(int $usuarioId): ?array
 {
@@ -67,7 +70,7 @@ function insignia_estado(string $estado): string
 }
 
 /** Membresías vigentes que vencen dentro de los próximos $dias días. */
-function membresias_por_vencer(int $dias = 7): array
+function membresias_por_vencer(int $dias = DIAS_POR_VENCER): array
 {
     return filas(
         'SELECT m.id, m.fecha_fin, DATEDIFF(m.fecha_fin, CURDATE()) AS dias_restantes,
@@ -107,4 +110,22 @@ function renovacion_pendiente(int $usuarioId): ?array
           ORDER BY m.fecha_inicio ASC LIMIT 1",
         [$usuarioId]
     );
+}
+
+/**
+ * ¿Se le ofrece al socio "Renovar membresía"?
+ *   - Sí, si su membresía vigente vence en DIAS_POR_VENCER días o menos.
+ *   - Sí, si ya no tiene una vigente (venció o se canceló).
+ *   - No, si ya pagó su siguiente periodo.
+ *   - No, si nunca ha tenido membresía: no hay nada que renovar, elige su primer plan.
+ */
+function puede_renovar(?array $vigente, ?array $ultima, ?array $renovacion): bool
+{
+    if ($renovacion) {
+        return false;
+    }
+    if ($vigente) {
+        return (int) $vigente['dias_restantes'] <= DIAS_POR_VENCER;
+    }
+    return $ultima !== null;
 }
