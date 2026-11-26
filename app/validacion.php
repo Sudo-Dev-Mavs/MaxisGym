@@ -4,6 +4,51 @@
  * Gestión de socios, Gestión de empleados y Alta de socios.
  */
 
+/** Edades aceptadas en la fecha de nacimiento. */
+const EDAD_MINIMA = 12;
+const EDAD_MAXIMA = 110;
+
+/**
+ * Nombres y apellidos: sólo letras (incluye acentos, ñ y ü). Las palabras se
+ * separan con un espacio, o con guion o apóstrofo en nombres como
+ * "Ruiz-Esparza" o "D'Angelo". Sin números ni otros símbolos.
+ */
+const PATRON_NOMBRE = '/^\p{L}[\p{L}\p{M}]*(?:[ \'’-]\p{L}[\p{L}\p{M}]*)*$/u';
+
+/** Mensaje de error para un nombre o apellido, o null si está bien. $que: "el nombre", "tu apellido"... */
+function error_nombre(string $valor, string $que): ?string
+{
+    if ($valor === '' || mb_strlen($valor) > 60) {
+        return 'Escribe ' . $que . ' (máximo 60 caracteres).';
+    }
+    if (!preg_match(PATRON_NOMBRE, $valor)) {
+        return ucfirst($que) . ' sólo puede llevar letras, sin números ni símbolos.';
+    }
+    return null;
+}
+
+/** Recorta y deja un solo espacio entre palabras ("Juan   Pablo" → "Juan Pablo"). */
+function limpiar_nombre(string $valor): string
+{
+    return trim(preg_replace('/\s+/u', ' ', $valor) ?? $valor);
+}
+
+/** Fechas de nacimiento aceptadas (Y-m-d): [más antigua, más reciente]. */
+function rango_fecha_nacimiento(): array
+{
+    return [
+        (new DateTime('today -' . EDAD_MAXIMA . ' years'))->format('Y-m-d'),
+        (new DateTime('today -' . EDAD_MINIMA . ' years'))->format('Y-m-d'),
+    ];
+}
+
+/** Atributos min y max para que el calendario sólo muestre fechas aceptadas. */
+function limites_fecha_nacimiento(): string
+{
+    [$min, $max] = rango_fecha_nacimiento();
+    return 'min="' . $min . '" max="' . $max . '"';
+}
+
 /**
  * Valida nombre, apellido, correo, teléfono y fecha de nacimiento.
  * Devuelve un arreglo campo => mensaje (vacío si todo está bien).
@@ -15,11 +60,11 @@ function validar_persona(array $d, int $idExcluir = 0, bool $telefonoObligatorio
 {
     $errores = [];
 
-    if (($d['nombre'] ?? '') === '' || mb_strlen($d['nombre']) > 60) {
-        $errores['nombre'] = 'Escribe el nombre (máximo 60 caracteres).';
+    if ($msg = error_nombre($d['nombre'] ?? '', 'el nombre')) {
+        $errores['nombre'] = $msg;
     }
-    if (($d['apellido'] ?? '') === '' || mb_strlen($d['apellido']) > 60) {
-        $errores['apellido'] = 'Escribe el apellido (máximo 60 caracteres).';
+    if ($msg = error_nombre($d['apellido'] ?? '', 'el apellido')) {
+        $errores['apellido'] = $msg;
     }
 
     $email = $d['email'] ?? '';
@@ -43,12 +88,13 @@ function validar_persona(array $d, int $idExcluir = 0, bool $telefonoObligatorio
         }
     } else {
         $fecha = DateTime::createFromFormat('!Y-m-d', $f);
+        [$min, $max] = rango_fecha_nacimiento();
         if (!$fecha || $fecha->format('Y-m-d') !== $f) {
             $errores['fecha_nacimiento'] = 'Escribe una fecha válida.';
-        } elseif ($fecha > new DateTime('-12 years')) {
-            $errores['fecha_nacimiento'] = 'Debe tener al menos 12 años.';
-        } elseif ($fecha < new DateTime('-110 years')) {
-            $errores['fecha_nacimiento'] = 'Revisa el año de nacimiento.';
+        } elseif ($fecha > new DateTime($max)) {
+            $errores['fecha_nacimiento'] = 'Debe tener al menos ' . EDAD_MINIMA . ' años.';
+        } elseif ($fecha < new DateTime($min)) {
+            $errores['fecha_nacimiento'] = 'Revisa el año de nacimiento: la fecha más antigua permitida es el ' . fecha($min) . '.';
         }
     }
 
@@ -59,8 +105,8 @@ function validar_persona(array $d, int $idExcluir = 0, bool $telefonoObligatorio
 function datos_persona_post(): array
 {
     return [
-        'nombre'           => entrada('nombre'),
-        'apellido'         => entrada('apellido'),
+        'nombre'           => limpiar_nombre(entrada('nombre')),
+        'apellido'         => limpiar_nombre(entrada('apellido')),
         'email'            => mb_strtolower(entrada('email')),
         'telefono'         => entrada('telefono'),
         'fecha_nacimiento' => entrada('fecha_nacimiento'),

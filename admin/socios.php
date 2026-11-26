@@ -132,7 +132,7 @@ if (isset($_GET['editar'])) {
                         <div class="col-sm-6">
                             <label class="form-label" for="<?= $campo ?>"><?= $etiqueta ?></label>
                             <input class="form-control<?= clase_invalida($errores, $campo) ?>" id="<?= $campo ?>" name="<?= $campo ?>"
-                                   value="<?= e($socio[$campo]) ?>" maxlength="60" required>
+                                   value="<?= e($socio[$campo]) ?>" maxlength="60" required data-solo-letras>
                             <?= mensaje_error($errores, $campo) ?>
                         </div>
                     <?php endforeach; ?>
@@ -151,7 +151,7 @@ if (isset($_GET['editar'])) {
                     <div class="col-sm-6">
                         <label class="form-label" for="fecha_nacimiento">Fecha de nacimiento</label>
                         <input class="form-control<?= clase_invalida($errores, 'fecha_nacimiento') ?>" id="fecha_nacimiento"
-                               name="fecha_nacimiento" type="date" value="<?= e($socio['fecha_nacimiento']) ?>" max="<?= date('Y-m-d') ?>">
+                               name="fecha_nacimiento" type="date" value="<?= e($socio['fecha_nacimiento']) ?>" <?= limites_fecha_nacimiento() ?>>
                         <?= mensaje_error($errores, 'fecha_nacimiento') ?>
                     </div>
                     <div class="col-12">

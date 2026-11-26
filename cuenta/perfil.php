@@ -100,13 +100,13 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <div class="col-sm-6">
                         <label class="form-label" for="nombre">Nombre</label>
                         <input class="form-control<?= $invalido('nombre', $errores) ?>" id="nombre" name="nombre"
-                               value="<?= $v('nombre') ?>" maxlength="60" required autocomplete="given-name">
+                               value="<?= $v('nombre') ?>" maxlength="60" required autocomplete="given-name" data-solo-letras>
                         <?= $error('nombre', $errores) ?>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label" for="apellido">Apellido</label>
                         <input class="form-control<?= $invalido('apellido', $errores) ?>" id="apellido" name="apellido"
-                               value="<?= $v('apellido') ?>" maxlength="60" required autocomplete="family-name">
+                               value="<?= $v('apellido') ?>" maxlength="60" required autocomplete="family-name" data-solo-letras>
                         <?= $error('apellido', $errores) ?>
                     </div>
                     <div class="col-sm-6">
@@ -124,7 +124,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <div class="col-sm-6">
                         <label class="form-label" for="fecha_nacimiento">Fecha de nacimiento</label>
                         <input class="form-control<?= $invalido('fecha_nacimiento', $errores) ?>" id="fecha_nacimiento"
-                               name="fecha_nacimiento" type="date" value="<?= $v('fecha_nacimiento') ?>" max="<?= date('Y-m-d') ?>">
+                               name="fecha_nacimiento" type="date" value="<?= $v('fecha_nacimiento') ?>" <?= limites_fecha_nacimiento() ?>>
                         <?= $error('fecha_nacimiento', $errores) ?>
                     </div>
                     <div class="col-sm-6">
