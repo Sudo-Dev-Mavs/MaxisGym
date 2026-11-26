@@ -900,6 +900,34 @@ a.dato-enlace { display: block; color: inherit; text-decoration: none; transitio
     background: var(--gis); border-left: 4px solid var(--seguridad);
     border-radius: 10px; padding: .7rem .9rem;
 }
+/* Consultar socios: sugerencias mientras se escribe y ficha del socio elegido */
+.buscador-grande .buscador-resultados { max-height: 420px; }
+.buscador-grande .btn { white-space: nowrap; }
+.sugerencia, .sugerencia-pie { background: #fff; }
+.sugerencia { display: flex; align-items: center; gap: .75rem; cursor: pointer; padding: .65rem 1rem; }
+.sugerencia-texto { flex: 1; min-width: 0; }
+.sugerencia-texto span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sugerencia mark { background: #FFE58A; color: inherit; padding: 0; border-radius: 2px; }
+.sugerencia.active { background: var(--gis); color: var(--tinta); border-color: var(--bs-list-group-border-color); box-shadow: inset 3px 0 0 var(--seguridad); }
+.sugerencia.active .text-body-secondary { color: var(--tinta-2) !important; }
+.sugerencia-pie { font-size: .9rem; font-weight: 600; color: var(--tinta-2); text-align: center; }
+.sugerencia-pie:hover { background: var(--gis); }
+
+.ficha { animation: aparecer 200ms var(--ease-out); }
+@keyframes aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ficha-cabeza { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.ficha-avatar {
+    flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--tinta); color: var(--seguridad); font-family: var(--fuente-titulos); font-weight: 800; font-size: 1.35rem;
+}
+.ficha-nombre { font-family: var(--fuente-titulos); font-weight: 800; font-size: 1.7rem; line-height: 1.1; margin: 0; }
+.ficha-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem 1.5rem; margin: 0 0 1.25rem; }
+.ficha-dato dt { font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-2); font-weight: 600; margin-bottom: .15rem; }
+.ficha-dato dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+.ficha-dato a { color: var(--tinta); }
+.ficha-acciones { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: 1.1rem; border-top: 1px solid var(--gis-2); }
+@media (prefers-reduced-motion: reduce) { .ficha { animation: none; } }
+
 .fila-nueva { animation: resaltar 2.5s ease; }
 @keyframes resaltar { from { background: #fff4c7; } to { background: transparent; } }
 

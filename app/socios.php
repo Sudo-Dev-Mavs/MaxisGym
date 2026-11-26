@@ -28,6 +28,10 @@ function buscar_socios(string $texto, string $estado = 'activos', int $limite = 
     }
 
     $texto = trim($texto);
+    // Orden: sin texto, alfabético. Con texto, primero los que EMPIEZAN con lo escrito
+    // (al escribir "ju" salen Juan y Juventino antes que "Ana Julia" o un correo con "ju").
+    $orden = 'u.nombre, u.apellido';
+    $paramsOrden = [];
     if ($texto !== '') {
         if (ctype_digit($texto)) {
             $condiciones[] = '(u.id = ? OR u.telefono LIKE ?)';
@@ -41,6 +45,9 @@ function buscar_socios(string $texto, string $estado = 'activos', int $limite = 
                 $params[] = $comodin;
                 $params[] = $comodin;
             }
+            $inicio = preg_replace('/\s+/', ' ', $texto) . '%';
+            $orden = "(CONCAT(u.nombre, ' ', u.apellido) LIKE ?) DESC, (u.apellido LIKE ?) DESC, " . $orden;
+            $paramsOrden = [$inicio, $inicio];
         }
     }
 
@@ -57,9 +64,9 @@ function buscar_socios(string $texto, string $estado = 'activos', int $limite = 
                  ORDER BY m2.fecha_fin DESC, m2.id DESC LIMIT 1)
            LEFT JOIN planes pl ON pl.id = um.plan_id
           WHERE $donde
-          ORDER BY u.nombre, u.apellido
+          ORDER BY $orden
           LIMIT " . (int) $limite . ' OFFSET ' . (int) $desde,
-        $params
+        array_merge($params, $paramsOrden)
     );
 
     foreach ($socios as &$s) {

@@ -1,7 +1,8 @@
 <?php
 /**
  * API (AJAX): búsqueda de socios.
- *   GET api/buscar_socios.php?q=juan            → JSON
+ *   GET api/buscar_socios.php?q=juan            → JSON (hasta 10 socios)
+ *   GET api/buscar_socios.php?q=juan&limite=50  → hasta 50 (máximo 50)
  * La usan "Registrar pagos" y "Consultar socios" para buscar mientras se escribe.
  * Requiere sesión con permiso para registrar pagos o consultar socios.
  */
@@ -16,7 +17,8 @@ if (mb_strlen($q) < 1) {
     responder_json(['ok' => true, 'socios' => [], 'total' => 0]);
 }
 
-$resultado = buscar_socios($q, 'activos', 10);
+$limite = max(1, min(50, (int) parametro('limite', '10')));
+$resultado = buscar_socios($q, 'activos', $limite);
 
 $socios = array_map(fn($s) => [
     'id'            => (int) $s['id'],
@@ -26,7 +28,9 @@ $socios = array_map(fn($s) => [
     'plan'          => $s['nombre_plan'],
     'plan_id'       => null,
     'estado'        => $s['estado_membresia'],
+    'inicio'        => $s['fecha_inicio'] ? fecha($s['fecha_inicio']) : null,
     'vence'         => $s['fecha_fin'] ? fecha($s['fecha_fin']) : null,
+    'alta'          => fecha($s['created_at']),
 ], $resultado['socios']);
 
 // Plan de la última membresía, para sugerirlo al renovar
