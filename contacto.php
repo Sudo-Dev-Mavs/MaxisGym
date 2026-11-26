@@ -6,6 +6,7 @@
  */
 require __DIR__ . '/app/bootstrap.php';
 require_once ROOT_PATH . '/app/componentes.php';
+require_once ROOT_PATH . '/app/validacion.php';
 
 $errores = [];
 
@@ -13,19 +14,19 @@ if (es_post()) {
     csrf_verificar();
 
     $datos = [
-        'nombre'   => entrada('nombre'),
-        'apellido' => entrada('apellido'),
+        'nombre'   => limpiar_nombre(entrada('nombre')),
+        'apellido' => limpiar_nombre(entrada('apellido')),
         'email'    => entrada('email'),
         'telefono' => entrada('telefono'),
         'asunto'   => entrada('asunto'),
         'mensaje'  => entrada('mensaje'),
     ];
 
-    if ($datos['nombre'] === '' || mb_strlen($datos['nombre']) > 60) {
-        $errores['nombre'] = 'Escribe tu nombre (máximo 60 caracteres).';
+    if ($msg = error_nombre($datos['nombre'], 'tu nombre')) {
+        $errores['nombre'] = $msg;
     }
-    if ($datos['apellido'] === '' || mb_strlen($datos['apellido']) > 60) {
-        $errores['apellido'] = 'Escribe tu apellido (máximo 60 caracteres).';
+    if ($msg = error_nombre($datos['apellido'], 'tu apellido')) {
+        $errores['apellido'] = $msg;
     }
     if (!correo_valido($datos['email'])) {
         $errores['email'] = 'Escribe un correo válido, por ejemplo nombre@correo.com.';
@@ -95,13 +96,13 @@ require ROOT_PATH . '/app/vistas/publico_inicio.php';
                             <div class="col-sm-6">
                                 <label class="form-label" for="nombre">Nombre</label>
                                 <input class="form-control<?= $invalido('nombre') ?>" id="nombre" name="nombre"
-                                       value="<?= viejo('nombre') ?>" maxlength="60" required autocomplete="given-name">
+                                       value="<?= viejo('nombre') ?>" maxlength="60" required autocomplete="given-name" data-solo-letras>
                                 <?= $error('nombre') ?>
                             </div>
                             <div class="col-sm-6">
                                 <label class="form-label" for="apellido">Apellido</label>
                                 <input class="form-control<?= $invalido('apellido') ?>" id="apellido" name="apellido"
-                                       value="<?= viejo('apellido') ?>" maxlength="60" required autocomplete="family-name">
+                                       value="<?= viejo('apellido') ?>" maxlength="60" required autocomplete="family-name" data-solo-letras>
                                 <?= $error('apellido') ?>
                             </div>
                             <div class="col-sm-6">

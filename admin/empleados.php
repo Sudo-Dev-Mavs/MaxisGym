@@ -205,7 +205,7 @@ if (isset($_GET['nuevo']) || isset($_GET['editar'])) {
             <?php foreach (['nombre' => 'Nombre', 'apellido' => 'Apellido'] as $c => $et): ?>
                 <div class="col-sm-6">
                     <label class="form-label" for="<?= $c ?>"><?= $et ?></label>
-                    <input class="form-control<?= clase_invalida($errores, $c) ?>" id="<?= $c ?>" name="<?= $c ?>" value="<?= e($emp[$c]) ?>" maxlength="60" required>
+                    <input class="form-control<?= clase_invalida($errores, $c) ?>" id="<?= $c ?>" name="<?= $c ?>" value="<?= e($emp[$c]) ?>" maxlength="60" required data-solo-letras>
                     <?= mensaje_error($errores, $c) ?>
                 </div>
             <?php endforeach; ?>

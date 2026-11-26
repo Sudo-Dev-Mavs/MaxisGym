@@ -55,3 +55,30 @@ document.addEventListener('submit', (evento) => {
     };
     modal.show();
 });
+
+/**
+ * Campos de nombre y apellido: sólo letras (con acentos), espacios, guion y apóstrofo.
+ * Uso: <input name="nombre" data-solo-letras>
+ * Quita al momento números y símbolos, también al pegar. El servidor valida lo mismo.
+ */
+function limpiarSoloLetras(campo) {
+    const limpio = campo.value.replace(/[^\p{L}\p{M} '’-]/gu, '');
+    if (limpio === campo.value) {
+        return;
+    }
+    const cursor = Math.max(0, (campo.selectionStart ?? limpio.length) - (campo.value.length - limpio.length));
+    campo.value = limpio;
+    campo.setSelectionRange(cursor, cursor);
+}
+
+document.addEventListener('input', (evento) => {
+    // Mientras se compone una letra con acento (tecla muerta) se espera a que termine
+    if (evento.target.matches('input[data-solo-letras]') && !evento.isComposing) {
+        limpiarSoloLetras(evento.target);
+    }
+});
+document.addEventListener('compositionend', (evento) => {
+    if (evento.target.matches('input[data-solo-letras]')) {
+        limpiarSoloLetras(evento.target);
+    }
+});

@@ -106,7 +106,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
             <?php foreach (['nombre' => 'Nombre', 'apellido' => 'Apellido'] as $c => $et): ?>
                 <div class="col-sm-6">
                     <label class="form-label" for="<?= $c ?>"><?= $et ?></label>
-                    <input class="form-control<?= clase_invalida($errores, $c) ?>" id="<?= $c ?>" name="<?= $c ?>" value="<?= $v($c) ?>" maxlength="60" required>
+                    <input class="form-control<?= clase_invalida($errores, $c) ?>" id="<?= $c ?>" name="<?= $c ?>" value="<?= $v($c) ?>" maxlength="60" required data-solo-letras>
                     <?= mensaje_error($errores, $c) ?>
                 </div>
             <?php endforeach; ?>
@@ -123,7 +123,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
             <div class="col-sm-6">
                 <label class="form-label" for="fecha_nacimiento">Fecha de nacimiento</label>
                 <input class="form-control<?= clase_invalida($errores, 'fecha_nacimiento') ?>" id="fecha_nacimiento" name="fecha_nacimiento"
-                       type="date" value="<?= $v('fecha_nacimiento') ?>" max="<?= date('Y-m-d') ?>" required>
+                       type="date" value="<?= $v('fecha_nacimiento') ?>" <?= limites_fecha_nacimiento() ?> required>
                 <?= mensaje_error($errores, 'fecha_nacimiento') ?>
             </div>
         </div>
