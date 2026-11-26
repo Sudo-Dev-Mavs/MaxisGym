@@ -1,13 +1,16 @@
 <?php
 /**
  * Dashboard del administrador.
- * Resumen del gimnasio y accesos a Gestión de socios, empleados, planes y reportes.
+ * Ingresos del mes contra el mismo periodo del mes pasado (con los últimos 6 meses),
+ * socios activos, membresías por vencer con acceso directo a cobrar, mensajes
+ * y los últimos pagos. Las secciones quedan en el menú lateral.
  */
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/membresias.php';
 require_once ROOT_PATH . '/app/vencimientos.php';
 require_once ROOT_PATH . '/app/mensajes.php';
+require_once ROOT_PATH . '/app/reportes.php';
 
 $yo = requiere_permiso(...PERMISOS_ADMIN);
 
@@ -26,9 +29,32 @@ $ingresosMes = (float) valor(
 $pagosMes = (int) valor(
     "SELECT COUNT(*) FROM pagos WHERE fecha_pago BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()"
 );
-$porVencer = count(membresias_por_vencer(7));
+
+// Mismo periodo del mes pasado: del día 1 al mismo día (o al último día si el mes pasado era más corto)
+$inicioPasado = new DateTime('first day of last month');
+$finPasado = (clone $inicioPasado)->setDate(
+    (int) $inicioPasado->format('Y'),
+    (int) $inicioPasado->format('n'),
+    min((int) date('j'), (int) $inicioPasado->format('t'))
+);
+$ingresosPasado = (float) valor(
+    'SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE fecha_pago BETWEEN ? AND ?',
+    [$inicioPasado->format('Y-m-d'), $finPasado->format('Y-m-d')]
+);
+if ($ingresosPasado > 0) {
+    $cambio = (int) round(($ingresosMes - $ingresosPasado) / $ingresosPasado * 100);
+    $tendencia = $cambio > 0 ? 'sube' : ($cambio < 0 ? 'baja' : 'igual');
+} else {
+    $cambio = null;
+    $tendencia = $ingresosMes > 0 ? 'sube' : 'igual';
+}
+$serie = ingresos_por_mes(6);
+$maximo = max(1, max(array_column($serie, 'total')));
+
+$porVencer = membresias_por_vencer(7);
 $revision = ultima_revision();
 $mensajesPendientes = mensajes_pendientes();
+$puedeCobrar = tiene_permiso('pagos.registrar');
 
 $ultimosPagos = filas(
     'SELECT pg.monto, pg.fecha_pago, u.nombre, u.apellido, pl.nombre_plan, mp.nombre AS metodo
@@ -48,96 +74,116 @@ $titulo = 'Panel de administración';
 require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
-<p class="text-body-secondary mb-4">Hola, <?= e($yo['nombre']) ?>. Así va el gimnasio hoy, <?= date('j') ?> de <?= $meses[(int) date('n')] ?>.</p>
+<p class="panel-saludo">Hola, <?= e($yo['nombre']) ?>. Así va el gimnasio hoy, <?= date('j') ?> de <?= $meses[(int) date('n')] ?>.</p>
 
 <?php if (!$revision || $revision['atrasada']): ?>
-    <div class="alert alert-warning d-flex gap-2" role="alert">
-        <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
-        <div>
-            <strong>La revisión diaria de vencimientos <?= $revision ? 'no corre desde ' . e(texto_ultima_revision($revision['fecha'])) : 'no se ha ejecutado' ?>.</strong>
-            Sin ella no se envían los correos de 7, 3 y 1 día ni se generan los avisos para recepción.
+    <details class="aviso-sistema mb-4">
+        <summary><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <?= $revision ? 'Avisos de vencimiento detenidos desde ' . e(texto_ultima_revision($revision['fecha'])) : 'La revisión diaria de vencimientos no se ha ejecutado' ?></summary>
+        <div class="aviso-sistema-detalle">
+            Sin la revisión diaria no se envían los correos de 7, 3 y 1 día ni se generan los avisos para recepción.
             Prográmala en el Programador de tareas de Windows como indica el README (sección <em>Tarea programada</em>) o ejecútala a mano:
             <code class="d-block mt-1">php tareas/notificar_vencimientos.php</code>
         </div>
-    </div>
+    </details>
 <?php endif; ?>
 
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="dato">
-            <p class="dato-etiqueta">Socios con membresía activa</p>
-            <p class="dato-valor"><?= $sociosVigentes ?></p>
-            <p class="dato-nota">de <?= $sociosRegistrados ?> socios registrados</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="dato">
-            <p class="dato-etiqueta">Ingresos de <?= $meses[(int) date('n')] ?></p>
+    <div class="col-md-12 col-xl-5">
+        <?php $etiquetaIngresos = tiene_permiso('reportes.ver') ? 'a' : 'div'; ?>
+        <<?= $etiquetaIngresos ?> class="dato dato-principal<?= $etiquetaIngresos === 'a' ? ' dato-enlace' : '' ?>"<?= $etiquetaIngresos === 'a' ? ' href="' . url('admin/reportes.php') . '"' : '' ?>>
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <p class="dato-etiqueta">Ingresos de <?= $meses[(int) date('n')] ?></p>
+                <span class="tendencia tendencia-<?= $tendencia ?>">
+                    <i class="bi bi-arrow-<?= $tendencia === 'baja' ? 'down' : ($tendencia === 'sube' ? 'up' : 'right') ?>-short" aria-hidden="true"></i>
+                    <?= $cambio === null ? ($ingresosMes > 0 ? 'Nuevo' : 'Sin cambio') : ($cambio > 0 ? '+' : '') . $cambio . ' %' ?>
+                </span>
+            </div>
             <p class="dato-valor"><?= e(dinero($ingresosMes)) ?></p>
-            <p class="dato-nota"><?= $pagosMes ?> <?= $pagosMes === 1 ? 'pago registrado' : 'pagos registrados' ?></p>
+            <p class="dato-nota"><?= $pagosMes ?> <?= $pagosMes === 1 ? 'pago' : 'pagos' ?> · <?= e(dinero($ingresosPasado)) ?> al <?= (int) $finPasado->format('j') ?> de <?= $meses[(int) $finPasado->format('n')] ?></p>
+            <ul class="barras" aria-label="Ingresos de los últimos 6 meses">
+                <?php foreach ($serie as $mes): ?>
+                    <li>
+                        <span class="barra-valor" style="height: <?= max(3, round($mes['total'] / $maximo * 100)) ?>%"></span>
+                        <small><?= e(explode(' ', $mes['etiqueta'])[0]) ?></small>
+                        <span class="visually-hidden"><?= e($mes['etiqueta'] . ': ' . dinero($mes['total'])) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </<?= $etiquetaIngresos ?>>
+    </div>
+    <div class="col-sm-4 col-xl-2">
+        <div class="dato">
+            <p class="dato-etiqueta">Socios activos</p>
+            <p class="dato-valor"><?= $sociosVigentes ?></p>
+            <p class="dato-nota">de <?= $sociosRegistrados ?> registrados</p>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-4 col-xl-2">
         <div class="dato<?= $porVencer ? ' dato-alerta' : '' ?>">
-            <p class="dato-etiqueta">Por vencer en 7 días</p>
-            <p class="dato-valor"><?= $porVencer ?></p>
-            <p class="dato-nota">membresías que conviene renovar</p>
+            <p class="dato-etiqueta">Por vencer</p>
+            <p class="dato-valor"><?= count($porVencer) ?></p>
+            <p class="dato-nota">en los próximos 7 días</p>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-4 col-xl-3">
         <?php $etiquetaDato = tiene_permiso('mensajes.atender') ? 'a' : 'div'; ?>
         <<?= $etiquetaDato ?> class="dato<?= $mensajesPendientes ? ' dato-alerta' : '' ?><?= $etiquetaDato === 'a' ? ' dato-enlace' : '' ?>"<?= $etiquetaDato === 'a' ? ' href="' . url('empleado/mensajes.php') . '"' : '' ?>>
             <p class="dato-etiqueta">Mensajes sin atender</p>
             <p class="dato-valor"><?= $mensajesPendientes ?></p>
-            <p class="dato-nota">del formulario de contacto<?= $etiquetaDato === 'a' ? ' · Ver mensajes' : '' ?></p>
+            <p class="dato-nota">del formulario de contacto<?= $etiquetaDato === 'a' ? ' · Ver' : '' ?></p>
         </<?= $etiquetaDato ?>>
     </div>
 </div>
 
 <div class="row g-4">
-    <div class="col-xl-7">
-        <h2 class="h4 mb-3">Secciones</h2>
-        <div class="atajos">
-            <?php if (tiene_permiso('socios.gestionar')): ?>
-                <a class="atajo" href="<?= url('admin/socios.php') ?>">
-                    <i class="bi bi-people" aria-hidden="true"></i>
-                    <span><strong>Gestión de socios</strong>Busca, edita o da de baja socios registrados.</span>
-                </a>
-            <?php endif; ?>
-            <?php if (tiene_permiso('empleados.gestionar')): ?>
-                <a class="atajo" href="<?= url('admin/empleados.php') ?>">
-                    <i class="bi bi-person-badge" aria-hidden="true"></i>
-                    <span><strong>Gestión de empleados</strong>Controla los datos, puesto y rol del personal.</span>
-                </a>
-            <?php endif; ?>
-            <?php if (tiene_permiso('reportes.ver')): ?>
-                <a class="atajo" href="<?= url('admin/reportes.php') ?>">
-                    <i class="bi bi-graph-up" aria-hidden="true"></i>
-                    <span><strong>Reportes</strong>Socios activos, empleados e ingresos por periodo, en PDF.</span>
-                </a>
-            <?php endif; ?>
-            <?php if (tiene_permiso('planes.gestionar')): ?>
-                <a class="atajo" href="<?= url('admin/planes.php') ?>">
-                    <i class="bi bi-tags" aria-hidden="true"></i>
-                    <span><strong>Gestión de planes</strong>Precios, duración y beneficios de cada plan.</span>
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
     <div class="col-xl-5">
-        <h2 class="h4 mb-3">Últimos pagos</h2>
+        <section class="tarjeta tarjeta-auto" aria-labelledby="titulo-vencer">
+            <div class="tarjeta-cabeza">
+                <h2 id="titulo-vencer">Por vencer esta semana</h2>
+                <?php if (tiene_permiso('socios.gestionar')): ?><a href="<?= url('admin/socios.php') ?>">Ver socios</a><?php endif; ?>
+            </div>
+            <?php if (!$porVencer): ?>
+                <p class="text-body-secondary mb-0">Ninguna membresía vence en los próximos 7 días.</p>
+            <?php else: ?>
+                <ul class="lista-simple">
+                    <?php foreach (array_slice($porVencer, 0, 6) as $m): ?>
+                        <?php $d = (int) $m['dias_restantes']; ?>
+                        <li class="align-items-center">
+                            <span class="min-w-0">
+                                <strong class="d-block text-truncate"><?= e($m['nombre'] . ' ' . $m['apellido']) ?></strong>
+                                <span class="meta"><?= e($m['nombre_plan']) ?> · <span class="<?= $d <= 1 ? 'text-danger fw-semibold' : '' ?>"><?= e(texto_dias($d)) ?></span></span>
+                            </span>
+                            <?php if ($puedeCobrar): ?>
+                                <a class="btn btn-sm btn-outline-dark text-nowrap" href="<?= url('empleado/pagos.php?socio=' . (int) $m['usuario_id']) ?>"
+                                   aria-label="Registrar pago de <?= e($m['nombre'] . ' ' . $m['apellido']) ?>">Cobrar</a>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php if (count($porVencer) > 6): ?>
+                    <p class="small text-body-secondary mt-3 mb-0">Y <?= count($porVencer) - 6 ?> más.</p>
+                <?php endif; ?>
+            <?php endif; ?>
+        </section>
+    </div>
+    <div class="col-xl-7">
+        <div class="tarjeta-cabeza">
+            <h2 class="h4 mb-0" id="titulo-pagos">Últimos pagos</h2>
+            <?php if ($puedeCobrar): ?><a href="<?= url('empleado/pagos.php') ?>">Registrar pago</a><?php endif; ?>
+        </div>
         <div class="tarjeta-tabla">
             <?php if (!$ultimosPagos): ?>
                 <p class="p-3 mb-0 text-body-secondary">Aún no hay pagos registrados.</p>
             <?php else: ?>
-                <table class="table mb-0 align-middle">
+                <table class="table mb-0 align-middle" aria-labelledby="titulo-pagos">
                     <thead><tr><th>Socio</th><th>Plan</th><th class="text-end">Monto</th></tr></thead>
                     <tbody>
                     <?php foreach ($ultimosPagos as $p): ?>
                         <tr>
                             <td><?= e($p['nombre'] . ' ' . $p['apellido']) ?><span class="d-block small text-body-secondary"><?= e(fecha($p['fecha_pago'])) ?> · <?= e($p['metodo']) ?></span></td>
                             <td><?= e($p['nombre_plan']) ?></td>
-                            <td class="text-end fw-semibold"><?= e(dinero($p['monto'])) ?></td>
+                            <td class="text-end fw-semibold text-nowrap"><?= e(dinero($p['monto'])) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>

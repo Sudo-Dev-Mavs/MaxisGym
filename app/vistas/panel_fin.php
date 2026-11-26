@@ -25,6 +25,7 @@ $scripts = $scripts ?? [];
 
 <script src="<?= asset('vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
 <script src="<?= asset('js/app.js') ?>"></script>
+<script src="<?= asset('js/panel.js') ?>"></script>
 <?php foreach ($scripts as $js): ?>
     <script src="<?= asset('js/' . $js) ?>"></script>
 <?php endforeach; ?>

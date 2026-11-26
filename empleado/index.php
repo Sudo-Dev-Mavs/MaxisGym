@@ -1,7 +1,7 @@
 <?php
 /**
  * Dashboard del empleado (recepción).
- * Accesos a Registrar pagos, Alta de socios, Consultar información y Avisos,
+ * Buscador de socios, acciones rápidas (cobrar, dar de alta, publicar aviso)
  * y los avisos de vencimiento que genera la tarea diaria
  * (tareas/notificar_vencimientos.php): recepción contacta al socio y lo marca
  * como atendido.
@@ -9,8 +9,7 @@
 require __DIR__ . '/../app/bootstrap.php';
 require_once ROOT_PATH . '/app/menu.php';
 require_once ROOT_PATH . '/app/vencimientos.php';
-require_once ROOT_PATH . 
-  '/app/mensajes.php';
+require_once ROOT_PATH . '/app/mensajes.php';
 
 $yo = requiere_permiso(...PERMISOS_RECEPCION);
 $veAvisos = tiene_permiso('socios.consultar');
@@ -38,7 +37,7 @@ $scripts = ['vencimientos.js'];
 require ROOT_PATH . '/app/vistas/panel_inicio.php';
 ?>
 
-<p class="text-body-secondary mb-4">Hola, <?= e($yo['nombre']) ?>. Esto es lo que tienes a la mano en recepción.</p>
+<p class="panel-saludo">Hola, <?= e($yo['nombre']) ?>. Esto es lo que tienes a la mano en recepción.</p>
 
 <?php if ($mensajesPendientes): ?>
     <a class="aviso-mensajes mb-4" href="<?= url('empleado/mensajes.php') ?>">
@@ -49,30 +48,24 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
     </a>
 <?php endif; ?>
 
-<div class="atajos atajos-4 mb-4">
+<?php if (tiene_permiso('socios.consultar')): ?>
+    <form class="buscador-grande mb-3" method="get" action="<?= url('empleado/consultar.php') ?>" role="search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <label class="visually-hidden" for="buscar-socio">Buscar socio por nombre, correo o ID</label>
+        <input class="form-control" id="buscar-socio" name="q" placeholder="Nombre, correo o ID del socio" autocomplete="off">
+        <button class="btn btn-dark" type="submit">Buscar</button>
+    </form>
+<?php endif; ?>
+
+<div class="acciones-panel mb-4">
     <?php if (tiene_permiso('pagos.registrar')): ?>
-        <a class="atajo" href="<?= url('empleado/pagos.php') ?>">
-            <i class="bi bi-cash-coin" aria-hidden="true"></i>
-            <span><strong>Registrar pagos</strong>Cobra una renovación y ve los pagos recientes.</span>
-        </a>
+        <a class="btn btn-seguridad" href="<?= url('empleado/pagos.php') ?>"><i class="bi bi-cash-coin" aria-hidden="true"></i>Registrar pago</a>
     <?php endif; ?>
     <?php if (tiene_permiso('socios.alta')): ?>
-        <a class="atajo" href="<?= url('empleado/alta_socio.php') ?>">
-            <i class="bi bi-person-plus" aria-hidden="true"></i>
-            <span><strong>Alta de socios</strong>Inscribe a un socio nuevo con su plan y su primer pago.</span>
-        </a>
-    <?php endif; ?>
-    <?php if (tiene_permiso('socios.consultar')): ?>
-        <a class="atajo" href="<?= url('empleado/consultar.php') ?>">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <span><strong>Consultar información</strong>Busca socios por nombre o ID y ve su plan activo.</span>
-        </a>
+        <a class="btn btn-outline-dark" href="<?= url('empleado/alta_socio.php') ?>"><i class="bi bi-person-plus" aria-hidden="true"></i>Alta de socio</a>
     <?php endif; ?>
     <?php if (tiene_permiso('anuncios.publicar')): ?>
-        <a class="atajo" href="<?= url('empleado/anuncios.php') ?>">
-            <i class="bi bi-megaphone" aria-hidden="true"></i>
-            <span><strong>Avisos</strong>Publica avisos del sistema para socios o personal.</span>
-        </a>
+        <a class="btn btn-outline-dark" href="<?= url('empleado/anuncios.php') ?>"><i class="bi bi-megaphone" aria-hidden="true"></i>Publicar aviso</a>
     <?php endif; ?>
 </div>
 

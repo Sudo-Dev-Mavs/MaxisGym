@@ -5,6 +5,7 @@
  * Si quien escribe tiene sesión iniciada, se liga a su usuario (usuario_id).
  */
 require __DIR__ . '/app/bootstrap.php';
+require_once ROOT_PATH . '/app/componentes.php';
 
 $errores = [];
 
@@ -73,23 +74,21 @@ $error = fn(string $c) => isset($errores[$c]) ? '<div class="invalid-feedback">'
 
 $titulo = 'Contacto · MaxisGym';
 $activo = 'contacto';
+$navSobreFoto = true;
 require ROOT_PATH . '/app/vistas/publico_inicio.php';
 ?>
 
-<section class="encabezado-pagina">
-    <div class="container">
-        <h1>Contáctanos</h1>
-        <p>¿Dudas sobre planes, horarios o tu membresía? Escríbenos y te respondemos por correo.</p>
-    </div>
-</section>
+<?= encabezado_pagina('Contáctanos',
+    '¿Dudas sobre planes, horarios o tu membresía? Escríbenos y te respondemos por correo.',
+    'img/instalaciones/cardio.jpg', 'Caminadoras frente a un ventanal al atardecer', '40% 50%') ?>
 
-<section class="seccion">
-    <div class="container">
-        <div class="row gy-5 gx-lg-5">
-            <div class="col-lg-7">
+<section class="seccion seccion-clara">
+    <div class="envoltura">
+        <div class="contacto-rejilla">
+            <div>
                 <?= flash_html() ?>
                 <div class="panel-blanco">
-                    <h2 class="h3 mb-4">Envíanos un mensaje</h2>
+                    <h2 class="mb-4">Envíanos un mensaje</h2>
                     <form method="post" action="<?= url('contacto.php') ?>" novalidate>
                         <?= csrf_campo() ?>
                         <div class="row g-3">
@@ -130,23 +129,24 @@ require ROOT_PATH . '/app/vistas/publico_inicio.php';
                                 <?= $error('mensaje') ?>
                             </div>
                             <div class="col-12">
-                                <button class="btn btn-seguridad px-4" type="submit">Enviar mensaje</button>
+                                <button class="boton" type="submit">Enviar mensaje<span class="flecha-circulo"><?= flecha() ?></span></button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <h2 class="h3">Encuéntranos</h2>
-                <ul class="datos-contacto mb-4">
+            <div>
+                <h2 class="titulo-l">Encuéntranos</h2>
+                <ul class="datos-contacto">
                     <li><i class="bi bi-geo-alt" aria-hidden="true"></i><span><?= e($g['direccion']) ?></span></li>
-                    <li><i class="bi bi-telephone" aria-hidden="true"></i><span><?= e($g['telefono']) ?></span></li>
-                    <li><i class="bi bi-envelope" aria-hidden="true"></i><span><?= e($g['email']) ?></span></li>
+                    <li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:<?= e(preg_replace('/\s+/', '', $g['telefono'])) ?>"><?= e($g['telefono']) ?></a></li>
+                    <li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:<?= e($g['email']) ?>"><?= e($g['email']) ?></a></li>
                     <li><i class="bi bi-clock" aria-hidden="true"></i><span><?= implode('<br>', array_map('e', $g['horario'])) ?></span></li>
                 </ul>
-                <iframe class="mapa" src="<?= e($mapa) ?>" title="Mapa de la ubicación de MaxisGym" loading="lazy"></iframe>
-                <a class="d-inline-block mt-2" target="_blank" rel="noopener"
-                   href="https://www.openstreetmap.org/?mlat=<?= $lat ?>&amp;mlon=<?= $lon ?>#map=17/<?= $lat ?>/<?= $lon ?>">Abrir el mapa en otra pestaña</a>
+                <div class="mapa-marco">
+                    <iframe class="mapa" src="<?= e($mapa) ?>" title="Mapa de la ubicación de MaxisGym" loading="lazy"></iframe>
+                </div>
+                <a class="enlace mt-2" target="_blank" rel="noopener" href="<?= e(enlace_mapa()) ?>">Abrir el mapa en otra pestaña <?= flecha() ?></a>
             </div>
         </div>
     </div>
