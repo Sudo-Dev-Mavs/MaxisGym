@@ -24,6 +24,7 @@ function planes_para_venta(): array
 
 /**
  * Valida los datos de un pago. $d: plan_id, metodo_pago_id, monto, fecha_pago.
+ * El monto debe coincidir exactamente con el precio del plan elegido.
  * Devuelve [errores, plan] (plan = fila del plan elegido o null).
  */
 function validar_pago(array $d): array
@@ -39,6 +40,10 @@ function validar_pago(array $d): array
     $monto = str_replace(',', '', (string) ($d['monto'] ?? ''));
     if (!is_numeric($monto) || $monto <= 0 || $monto > 999999.99) {
         $errores['monto'] = 'Escribe un monto mayor a cero.';
+    } elseif ($plan && (int) round((float) $monto * 100) !== (int) round((float) $plan['precio'] * 100)) {
+        // El pago debe cubrir exactamente el precio del plan (se compara en centavos
+        // para evitar errores de redondeo con decimales)
+        $errores['monto'] = 'El monto debe ser igual al precio del plan: ' . dinero($plan['precio']) . '.';
     }
     $f = DateTime::createFromFormat('!Y-m-d', (string) ($d['fecha_pago'] ?? ''));
     if (!$f || $f->format('Y-m-d') !== $d['fecha_pago']) {
