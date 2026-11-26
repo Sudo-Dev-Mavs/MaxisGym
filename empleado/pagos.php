@@ -6,6 +6,10 @@
  * elige el plan, el método y la fecha, y registra el pago. Cada pago crea
  * un periodo de membresía (ver app/pagos.php).
  *
+ * Al elegir al socio se piden sus opciones (api/opciones_pago.php): según su
+ * membresía se le puede inscribir, renovar, sólo mejorar de plan o nada
+ * (si ya pagó su siguiente periodo). El servidor revisa lo mismo al registrar.
+ *
  * El formulario se envía con AJAX (fetch) y la tabla de pagos recientes se
  * actualiza sin recargar la página. Si JavaScript está desactivado, el
  * formulario funciona igual con un envío normal.
@@ -36,20 +40,33 @@ if (es_post()) {
     [$erroresPago, $plan] = validar_pago($datos);
     $errores += $erroresPago;
 
+    // Qué se le puede cobrar a este socio hoy (evita acumular periodos pagados)
+    $cobro = isset($errores['socio_id']) ? null : opciones_de_pago((int) $socio['id']);
+    if ($cobro && $cobro['modo'] === 'bloqueado') {
+        $errores['socio_id'] = $cobro['aviso'];
+    } elseif ($cobro && $plan && !opcion_de_plan($cobro, (int) $plan['id'])) {
+        $errores['plan_id'] = 'Por ahora sólo puede mejorar a un plan de mayor precio que su ' . ($cobro['mejora']['plan'] ?? 'plan actual') . '.';
+    }
+
     if (!$errores) {
+        $mejora = $cobro['modo'] === 'mejora' ? $cobro['mejora'] : null;
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $r = crear_membresia_con_pago($socio['id'], $plan, $datos['metodo_pago_id'], $datos['fecha_pago'], (int) $yo['id']);
+            $r = crear_membresia_con_pago($socio['id'], $plan, $datos['metodo_pago_id'], $datos['fecha_pago'], (int) $yo['id'], $mejora);
             $pdo->commit();
         } catch (Throwable $ex) {
             $pdo->rollBack();
             throw $ex;
         }
 
-        $mensaje = 'Pago de ' . dinero($plan['precio']) . ' registrado para ' . $socio['nombre'] . ' ' . $socio['apellido']
-            . '. ' . $plan['nombre_plan'] . ' del ' . fecha($r['fecha_inicio']) . ' al ' . fecha($r['fecha_fin'])
-            . ($r['renovacion'] ? ' (inicia al terminar su periodo actual).' : '.');
+        $quien = $socio['nombre'] . ' ' . $socio['apellido'];
+        $periodo = $plan['nombre_plan'] . ' del ' . fecha($r['fecha_inicio']) . ' al ' . fecha($r['fecha_fin']);
+        $mensaje = $r['mejora']
+            ? 'Mejora registrada para ' . $quien . ': ' . $periodo . '. Se cobraron ' . dinero($r['monto']) . ' ('
+                . dinero($plan['precio']) . ' menos ' . dinero($r['credito']) . ' que no usó de su ' . $mejora['plan'] . ').'
+            : 'Pago de ' . dinero($r['monto']) . ' registrado para ' . $quien . '. ' . $periodo
+                . ($r['renovacion'] ? ' (inicia al terminar su periodo actual).' : '.');
 
         if (es_ajax()) {
             $nuevo = array_values(array_filter(pagos_recientes(5), fn($p) => (int) $p['id'] === $r['pago_id']));
@@ -70,9 +87,13 @@ $preId = (int) ($_SESSION['viejo']['socio_id'] ?? parametro('socio', '0'));
 $pre = $preId ? socio_por_id($preId) : null;
 $preMembresia = $pre ? ultima_membresia((int) $pre['id']) : null;
 
-$planes = planes_para_venta();
-// Plan sugerido: el del intento anterior, o el que ya tenía el socio
-$planInicial = plan_elegido($planes, (int) ($_SESSION['viejo']['plan_id'] ?? ($preMembresia['plan_id'] ?? 0)));
+// Planes que se le pueden cobrar; elegido: el del intento anterior, o el sugerido
+$cobro = opciones_de_pago($pre ? (int) $pre['id'] : null);
+$bloqueado = $cobro['modo'] === 'bloqueado';
+$planInicial = opcion_de_plan($cobro, (int) ($_SESSION['viejo']['plan_id'] ?? 0))
+    ?? opcion_de_plan($cobro, (int) $cobro['sugerido'])
+    ?? ($cobro['planes'][0] ?? null);
+$credito = (float) ($planInicial['credito'] ?? 0);
 $metodos = metodos_pago_activos();
 $recientes = array_map('pago_para_tabla', pagos_recientes(15));
 $v = fn(string $c, string $d = '') => e($_SESSION['viejo'][$c] ?? $d);
@@ -85,7 +106,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
 <div class="row g-4">
     <div class="col-xl-5">
         <form method="post" action="<?= url('empleado/pagos.php') ?>" class="tarjeta tarjeta-fija" id="form-pago" novalidate
-              data-api="<?= url('api/buscar_socios.php') ?>">
+              data-api="<?= url('api/buscar_socios.php') ?>" data-opciones="<?= url('api/opciones_pago.php') ?>">
             <?= csrf_campo() ?>
             <h2 class="h4 mb-3">Formulario de pago</h2>
             <div id="alerta-pago" aria-live="polite"></div>
@@ -114,16 +135,22 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                 <button type="button" class="btn btn-sm btn-link p-0 mt-1" id="cambiar-socio">Cambiar socio</button>
             </div>
 
+            <div id="aviso-pago" class="alert <?= $bloqueado ? 'alert-warning' : 'alert-info' ?> small py-2 mb-3" role="status"
+                <?= $cobro['aviso'] === '' ? 'hidden' : '' ?>><?= e($cobro['aviso']) ?></div>
+
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label" for="plan_id">Plan</label>
-                    <select class="form-select" id="plan_id" name="plan_id" required>
-                        <?php foreach ($planes as $p): ?>
-                            <?php $sel = (int) $p['id'] === (int) ($planInicial['id'] ?? 0); ?>
-                            <option value="<?= (int) $p['id'] ?>" data-precio="<?= e($p['precio']) ?>" <?= $sel ? 'selected' : '' ?>>
-                                <?= e($p['nombre_plan']) ?> (<?= e(dinero($p['precio'])) ?>, <?= (int) $p['duracion_dias'] ?> días)
+                    <select class="form-select" id="plan_id" name="plan_id" required <?= $bloqueado ? 'disabled' : '' ?>
+                            data-mejora-de="<?= e($cobro['mejora']['plan'] ?? '') ?>">
+                        <?php foreach ($cobro['planes'] as $o): ?>
+                            <option value="<?= $o['id'] ?>" data-precio="<?= e(number_format($o['precio'], 2, '.', '')) ?>"
+                                    data-monto="<?= e(number_format($o['monto'], 2, '.', '')) ?>" data-credito="<?= e(number_format($o['credito'], 2, '.', '')) ?>"
+                                    <?= $o['id'] === ($planInicial['id'] ?? 0) ? 'selected' : '' ?>>
+                                <?= e($o['nombre']) ?> (<?= e(dinero($o['precio'])) ?>, <?= $o['duracion'] ?> días)
                             </option>
                         <?php endforeach; ?>
+                        <?php if (!$cobro['planes']): ?><option value="">Sin planes disponibles</option><?php endif; ?>
                     </select>
                     <div class="invalid-feedback d-block" data-error="plan_id"><?= e($errores['plan_id'] ?? '') ?></div>
                 </div>
@@ -132,9 +159,11 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <div class="input-group">
                         <span class="input-group-text">$</span>
                         <input class="form-control campo-fijo" id="monto" type="text" readonly aria-describedby="ayuda-monto"
-                               value="<?= e(number_format((float) ($planInicial['precio'] ?? 0), 2)) ?>">
+                               value="<?= $planInicial ? e(number_format($planInicial['monto'], 2)) : '' ?>">
                     </div>
-                    <div class="form-text" id="ayuda-monto">Es el precio del plan elegido.</div>
+                    <div class="form-text" id="ayuda-monto"><?= !$planInicial ? '' : ($credito > 0
+                        ? e('Precio ' . dinero($planInicial['precio']) . ' menos ' . dinero($credito) . ' que no ha usado de su ' . $cobro['mejora']['plan'] . '.')
+                        : 'Es el precio del plan elegido.') ?></div>
                 </div>
                 <div class="col-sm-6">
                     <label class="form-label" for="fecha_pago">Fecha de pago</label>
@@ -153,7 +182,7 @@ require ROOT_PATH . '/app/vistas/panel_inicio.php';
                     <div class="invalid-feedback d-block" data-error="metodo_pago_id"><?= e($errores['metodo_pago_id'] ?? '') ?></div>
                 </div>
                 <div class="col-12">
-                    <button class="btn btn-seguridad w-100" type="submit" id="boton-pago">Registrar pago</button>
+                    <button class="btn btn-seguridad w-100" type="submit" id="boton-pago" <?= $bloqueado ? 'disabled' : '' ?>>Registrar pago</button>
                 </div>
             </div>
         </form>
